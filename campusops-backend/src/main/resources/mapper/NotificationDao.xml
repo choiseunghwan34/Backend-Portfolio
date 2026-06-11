@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusops.dao.NotificationDao">
+    <sql id="notificationColumns">
+        notification_no, user_no, title, content, read_yn, created_at
+    </sql>
+
+    <insert id="insertNotification" parameterType="com.campusops.vo.NotificationVO" useGeneratedKeys="true" keyProperty="notificationNo" keyColumn="notification_no">
+        INSERT INTO notification (user_no, title, content, read_yn)
+        VALUES (#{userNo}, #{title}, #{content}, COALESCE(#{readYn}, false))
+    </insert>
+
+    <select id="selectByUser" resultType="com.campusops.vo.NotificationVO">
+        SELECT <include refid="notificationColumns" />
+        FROM notification
+        WHERE user_no = #{userNo}
+        ORDER BY notification_no DESC
+    </select>
+
+    <update id="markRead">
+        UPDATE notification
+        SET read_yn = true
+        WHERE notification_no = #{notificationNo}
+          AND user_no = #{userNo}
+    </update>
+
+    <select id="countUnread" resultType="int">
+        SELECT COUNT(*)
+        FROM notification
+        WHERE user_no = #{userNo}
+          AND read_yn = false
+    </select>
+</mapper>

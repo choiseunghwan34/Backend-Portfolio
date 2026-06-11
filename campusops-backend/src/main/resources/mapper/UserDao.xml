@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusops.dao.UserDao">
+    <insert id="insertUser" parameterType="com.campusops.vo.UserVO" useGeneratedKeys="true" keyProperty="userNo" keyColumn="user_no">
+        INSERT INTO users (user_id, user_pw, user_name, email, role)
+        VALUES (#{userId}, #{userPw}, #{userName}, #{email}, COALESCE(#{role}, 'USER'))
+    </insert>
+
+    <select id="selectByUserId" resultType="com.campusops.vo.UserVO">
+        SELECT user_no, user_id, user_pw, user_name, email, role, created_at
+        FROM users
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="selectByEmail" resultType="com.campusops.vo.UserVO">
+        SELECT user_no, user_id, user_pw, user_name, email, role, created_at
+        FROM users
+        WHERE email = #{email}
+    </select>
+
+    <select id="selectByUserNo" resultType="com.campusops.vo.UserVO">
+        SELECT user_no, user_id, user_pw, user_name, email, role, created_at
+        FROM users
+        WHERE user_no = #{userNo}
+    </select>
+
+    <select id="countUsers" resultType="int">
+        SELECT COUNT(*) FROM users
+    </select>
+</mapper>

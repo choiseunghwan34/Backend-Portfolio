@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusops.dao.AssetDao">
+    <sql id="assetColumns">
+        asset_no, asset_name, category, status, description, created_at
+    </sql>
+
+    <sql id="rentalColumns">
+        rental_no, asset_no, user_no, rental_status, rental_date, return_due_date, returned_at, created_at
+    </sql>
+
+    <select id="selectAssets" resultType="com.campusops.vo.AssetVO">
+        SELECT <include refid="assetColumns" />
+        FROM asset
+        ORDER BY asset_no DESC
+    </select>
+
+    <select id="selectAsset" resultType="com.campusops.vo.AssetVO">
+        SELECT <include refid="assetColumns" />
+        FROM asset
+        WHERE asset_no = #{assetNo}
+    </select>
+
+    <insert id="insertAsset" parameterType="com.campusops.vo.AssetVO" useGeneratedKeys="true" keyProperty="assetNo" keyColumn="asset_no">
+        INSERT INTO asset (asset_name, category, status, description)
+        VALUES (#{assetName}, #{category}, COALESCE(#{status}, 'AVAILABLE'), #{description})
+    </insert>
+
+    <update id="updateAsset">
+        UPDATE asset
+        SET asset_name = #{assetName},
+            category = #{category},
+            description = #{description}
+        WHERE asset_no = #{assetNo}
+    </update>
+
+    <update id="disableAsset">
+        UPDATE asset
+        SET status = 'DISABLED'
+        WHERE asset_no = #{assetNo}
+    </update>
+
+    <update id="updateAssetStatus">
+        UPDATE asset
+        SET status = #{status}
+        WHERE asset_no = #{assetNo}
+    </update>
+
+    <insert id="insertRental" parameterType="com.campusops.vo.AssetRentalVO" useGeneratedKeys="true" keyProperty="rentalNo" keyColumn="rental_no">
+        INSERT INTO asset_rental (asset_no, user_no, rental_status, rental_date, return_due_date)
+        VALUES (#{assetNo}, #{userNo}, COALESCE(#{rentalStatus}, 'REQUESTED'), #{rentalDate}, #{returnDueDate})
+    </insert>
+
+    <select id="selectMyRentals" resultType="com.campusops.vo.AssetRentalVO">
+        SELECT <include refid="rentalColumns" />
+        FROM asset_rental
+        WHERE user_no = #{userNo}
+        ORDER BY rental_no DESC
+    </select>
+
+    <select id="selectAllRentals" resultType="com.campusops.vo.AssetRentalVO">
+        SELECT <include refid="rentalColumns" />
+        FROM asset_rental
+        ORDER BY rental_no DESC
+    </select>
+
+    <select id="selectRental" resultType="com.campusops.vo.AssetRentalVO">
+        SELECT <include refid="rentalColumns" />
+        FROM asset_rental
+        WHERE rental_no = #{rentalNo}
+    </select>
+
+    <update id="updateRentalStatus">
+        UPDATE asset_rental
+        SET rental_status = #{status},
+            returned_at = CASE WHEN #{status} = 'RETURNED' THEN CURRENT_TIMESTAMP ELSE returned_at END
+        WHERE rental_no = #{rentalNo}
+    </update>
+
+    <select id="countRequestedRentals" resultType="int">
+        SELECT COUNT(*)
+        FROM asset_rental
+        WHERE rental_status = 'REQUESTED'
+    </select>
+</mapper>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusops.dao.NoticeDao">
+    <sql id="noticeColumns">
+        notice_no, title, content, category, important_yn, view_count, created_at, updated_at
+    </sql>
+
+    <select id="selectNotices" resultType="com.campusops.vo.NoticeVO">
+        SELECT <include refid="noticeColumns" />
+        FROM notice
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (title ILIKE CONCAT('%', #{keyword}, '%')
+                OR content ILIKE CONCAT('%', #{keyword}, '%')
+                OR category ILIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY important_yn DESC, notice_no DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countNotices" resultType="long">
+        SELECT COUNT(*)
+        FROM notice
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (title ILIKE CONCAT('%', #{keyword}, '%')
+                OR content ILIKE CONCAT('%', #{keyword}, '%')
+                OR category ILIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <select id="selectNotice" resultType="com.campusops.vo.NoticeVO">
+        SELECT <include refid="noticeColumns" />
+        FROM notice
+        WHERE notice_no = #{noticeNo}
+    </select>
+
+    <select id="selectNoticeForUpdate" resultType="com.campusops.vo.NoticeVO">
+        SELECT <include refid="noticeColumns" />
+        FROM notice
+        WHERE notice_no = #{noticeNo}
+    </select>
+
+    <insert id="insertNotice" parameterType="com.campusops.vo.NoticeVO" useGeneratedKeys="true" keyProperty="noticeNo" keyColumn="notice_no">
+        INSERT INTO notice (title, content, category, important_yn)
+        VALUES (#{title}, #{content}, #{category}, COALESCE(#{importantYn}, false))
+    </insert>
+
+    <update id="updateNotice" parameterType="com.campusops.vo.NoticeVO">
+        UPDATE notice
+        SET title = #{title},
+            content = #{content},
+            category = #{category},
+            important_yn = COALESCE(#{importantYn}, false),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE notice_no = #{noticeNo}
+    </update>
+
+    <delete id="deleteNotice">
+        DELETE FROM notice WHERE notice_no = #{noticeNo}
+    </delete>
+
+    <update id="incrementViewCount">
+        UPDATE notice
+        SET view_count = view_count + 1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE notice_no = #{noticeNo}
+    </update>
+
+    <select id="selectRecentNotices" resultType="com.campusops.vo.NoticeVO">
+        SELECT <include refid="noticeColumns" />
+        FROM notice
+        ORDER BY important_yn DESC, notice_no DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

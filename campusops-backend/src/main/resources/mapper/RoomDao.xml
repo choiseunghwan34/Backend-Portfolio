@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusops.dao.RoomDao">
+    <sql id="roomColumns">
+        room_no, room_name, location, capacity, status, created_at
+    </sql>
+
+    <sql id="reservationColumns">
+        reservation_no, room_no, user_no, reservation_date, start_time, end_time, status, created_at
+    </sql>
+
+    <select id="selectRooms" resultType="com.campusops.vo.RoomVO">
+        SELECT <include refid="roomColumns" />
+        FROM room
+        ORDER BY room_no DESC
+    </select>
+
+    <select id="selectRoom" resultType="com.campusops.vo.RoomVO">
+        SELECT <include refid="roomColumns" />
+        FROM room
+        WHERE room_no = #{roomNo}
+    </select>
+
+    <insert id="insertRoom" parameterType="com.campusops.vo.RoomVO" useGeneratedKeys="true" keyProperty="roomNo" keyColumn="room_no">
+        INSERT INTO room (room_name, location, capacity, status)
+        VALUES (#{roomName}, #{location}, #{capacity}, COALESCE(#{status}, 'AVAILABLE'))
+    </insert>
+
+    <update id="updateRoom">
+        UPDATE room
+        SET room_name = #{roomName},
+            location = #{location},
+            capacity = #{capacity}
+        WHERE room_no = #{roomNo}
+    </update>
+
+    <update id="disableRoom">
+        UPDATE room
+        SET status = 'DISABLED'
+        WHERE room_no = #{roomNo}
+    </update>
+
+    <select id="selectReservationsByRoom" resultType="com.campusops.vo.RoomReservationVO">
+        SELECT <include refid="reservationColumns" />
+        FROM room_reservation
+        WHERE room_no = #{roomNo}
+        ORDER BY reservation_date DESC, start_time DESC
+    </select>
+
+    <select id="selectMyReservations" resultType="com.campusops.vo.RoomReservationVO">
+        SELECT <include refid="reservationColumns" />
+        FROM room_reservation
+        WHERE user_no = #{userNo}
+        ORDER BY reservation_date DESC, start_time DESC
+    </select>
+
+    <select id="selectAllReservations" resultType="com.campusops.vo.RoomReservationVO">
+        SELECT <include refid="reservationColumns" />
+        FROM room_reservation
+        ORDER BY reservation_date DESC, start_time DESC
+    </select>
+
+    <insert id="insertReservation" parameterType="com.campusops.vo.RoomReservationVO" useGeneratedKeys="true" keyProperty="reservationNo" keyColumn="reservation_no">
+        INSERT INTO room_reservation (room_no, user_no, reservation_date, start_time, end_time, status)
+        VALUES (#{roomNo}, #{userNo}, #{reservationDate}, #{startTime}, #{endTime}, COALESCE(#{status}, 'RESERVED'))
+    </insert>
+
+    <update id="cancelReservation">
+        UPDATE room_reservation
+        SET status = 'CANCELLED'
+        WHERE reservation_no = #{reservationNo}
+    </update>
+
+    <select id="countTodayReservations" resultType="int">
+        SELECT COUNT(*)
+        FROM room_reservation
+        WHERE reservation_date = CURRENT_DATE
+    </select>
+
+    <select id="existsReservation" resultType="int">
+        SELECT COUNT(*)
+        FROM room_reservation
+        WHERE room_no = #{roomNo}
+          AND reservation_date = #{reservationDate}
+          AND status = 'RESERVED'
+          AND start_time < #{endTime}
+          AND end_time > #{startTime}
+    </select>
+</mapper>

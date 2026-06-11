@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusops.dao.ReportDao">
+    <sql id="reportColumns">
+        report_no, user_no, title, content, place, category, status, admin_reply, created_at, updated_at
+    </sql>
+
+    <insert id="insertReport" parameterType="com.campusops.vo.FacilityReportVO" useGeneratedKeys="true" keyProperty="reportNo" keyColumn="report_no">
+        INSERT INTO facility_report (user_no, title, content, place, category, status)
+        VALUES (#{userNo}, #{title}, #{content}, #{place}, #{category}, COALESCE(#{status}, 'RECEIVED'))
+    </insert>
+
+    <select id="selectMyReports" resultType="com.campusops.vo.FacilityReportVO">
+        SELECT <include refid="reportColumns" />
+        FROM facility_report
+        WHERE user_no = #{userNo}
+        ORDER BY report_no DESC
+    </select>
+
+    <select id="selectReport" resultType="com.campusops.vo.FacilityReportVO">
+        SELECT <include refid="reportColumns" />
+        FROM facility_report
+        WHERE report_no = #{reportNo}
+    </select>
+
+    <select id="selectAllReports" resultType="com.campusops.vo.FacilityReportVO">
+        SELECT <include refid="reportColumns" />
+        FROM facility_report
+        ORDER BY report_no DESC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE facility_report
+        SET status = #{status},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE report_no = #{reportNo}
+    </update>
+
+    <update id="updateReply">
+        UPDATE facility_report
+        SET admin_reply = #{reply},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE report_no = #{reportNo}
+    </update>
+
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(*)
+        FROM facility_report
+        WHERE status = #{status}
+    </select>
+
+    <select id="selectRecentReports" resultType="com.campusops.vo.FacilityReportVO">
+        SELECT <include refid="reportColumns" />
+        FROM facility_report
+        ORDER BY report_no DESC
+        LIMIT #{limit}
+    </select>
+</mapper>
