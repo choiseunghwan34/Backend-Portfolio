@@ -18,7 +18,7 @@ export default function Navbar() {
     <header className="navbar">
       <div className="navbar__brand">
         <Link to={user ? (user.role === 'ADMIN' ? '/admin' : '/dashboard') : '/home'}>
-          <span className="navbar__brand-mark">CO</span>
+          <img className="navbar__brand-mark" src="/campusops-mark.svg" alt="" />
           <span className="navbar__brand-text">CampusOps</span>
         </Link>
       </div>
@@ -26,10 +26,13 @@ export default function Navbar() {
       <nav className="navbar__menu">
         {!user ? (
           <>
-            <a href="#notices" className={location.hash === '#notices' || isActive('/home') ? 'active' : ''}>공지사항</a>
-            <a href="#guide" className={location.hash === '#guide' ? 'active' : ''}>이용안내</a>
-            <Link to="/login" className={isActive('/login') ? 'active' : ''}>로그인</Link>
-            <Link to="/signup" className={isActive('/signup') ? 'active' : ''}>회원가입</Link>
+            <Link to="/notices" className={isActive('/notices') ? 'active' : ''}>공지사항</Link>
+            <Link to="/reports" className={isActive('/reports') ? 'active' : ''}>시설신고</Link>
+            <Link to="/assets" className={isActive('/assets') ? 'active' : ''}>기자재대여</Link>
+            <Link to="/rooms" className={isActive('/rooms') ? 'active' : ''}>공간예약</Link>
+            <Link to="/notifications" className={isActive('/notifications') ? 'active' : ''}>알림</Link>
+            <Link to="/login" className={`navbar__login ${isActive('/login') ? 'active' : ''}`}>로그인</Link>
+            <Link to="/signup" className={`navbar__signup ${isActive('/signup') ? 'active' : ''}`}>회원가입</Link>
           </>
         ) : (
           <>
