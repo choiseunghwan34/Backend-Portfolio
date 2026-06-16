@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { reportApi } from '../api/reportApi';
 
+function statusClass(value = '') {
+  return String(value).toLowerCase();
+}
+
 export default function ReportPage() {
   const [form, setForm] = useState({ place: '', category: '', title: '', content: '' });
   const [myReports, setMyReports] = useState([]);
@@ -20,28 +24,44 @@ export default function ReportPage() {
   };
 
   return (
-    <div className="content-grid two-col">
-      <section className="content-card">
-        <h1>시설 신고</h1>
-        <form className="form-grid" onSubmit={submit}>
-          <label>장소<input value={form.place} onChange={(e) => setForm({ ...form, place: e.target.value })} /></label>
-          <label>카테고리<input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label>
-          <label>제목<input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
-          <label>내용<textarea rows="5" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label>
-          <button className="primary-button" type="submit">신고 등록</button>
-        </form>
-      </section>
-      <section className="content-card">
-        <h2>내 신고 목록</h2>
-        <div className="stack-list">
-          {myReports.map((report) => (
-            <div className="list-item" key={report.reportNo}>
-              <strong>{report.title}</strong>
-              <span>{report.place} · {report.status}</span>
-            </div>
-          ))}
+    <div className="workspace-page">
+      <section className="workspace-hero">
+        <div className="workspace-hero__copy">
+          <span className="workspace-label">FACILITY REPORT</span>
+          <h1>시설 신고</h1>
+          <p>고장 위치와 증상을 남기면 담당자가 처리 상태와 답변을 등록합니다.</p>
         </div>
+        <div className="workspace-hero__aside"><span>내 신고</span><strong>{myReports.length}건</strong></div>
       </section>
+
+      <div className="workspace-grid two">
+        <section className="workspace-card">
+          <div className="workspace-card__head"><div><h2>신고 등록</h2><p>도배 방지를 위해 60초 간격으로 접수됩니다.</p></div></div>
+          <form className="workspace-form" onSubmit={submit}>
+            <label>장소<input required value={form.place} onChange={(e) => setForm({ ...form, place: e.target.value })} placeholder="예: 본관 3층 복도" /></label>
+            <label>카테고리<input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="조명, 냉난방, 출입문 등" /></label>
+            <label>제목<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="신고 제목" /></label>
+            <label>내용<textarea required rows="6" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="증상과 요청 내용을 입력하세요." /></label>
+            <button className="primary-button" type="submit">신고 등록</button>
+          </form>
+        </section>
+
+        <section className="workspace-card">
+          <div className="workspace-card__head"><div><h2>내 신고 목록</h2><p>접수 후 처리 상태와 관리자 답변을 확인합니다.</p></div></div>
+          <div className="workspace-list">
+            {myReports.map((report) => (
+              <div className="workspace-row" key={report.reportNo}>
+                <div className="workspace-row__main">
+                  <strong>{report.title}</strong>
+                  <span>{report.place} · {report.category || '기타'}{report.adminReply ? ` · 답변: ${report.adminReply}` : ''}</span>
+                </div>
+                <span className={`status-pill ${statusClass(report.status)}`}>{report.status}</span>
+              </div>
+            ))}
+            {!myReports.length ? <div className="workspace-empty">아직 등록한 신고가 없습니다.</div> : null}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
