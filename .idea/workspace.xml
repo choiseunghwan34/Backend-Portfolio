@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="58c16381-e8e3-4a32-aebd-9daee9b5f39e" name="변경" comment="" />
+    <list default="true" id="58c16381-e8e3-4a32-aebd-9daee9b5f39e" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/campusops-backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/campusops-backend/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/campusops-backend/src/main/resources/mapper/RoomDao.xml" beforeDir="false" afterPath="$PROJECT_DIR$/campusops-backend/src/main/resources/mapper/RoomDao.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -23,6 +27,7 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
@@ -42,6 +47,7 @@
       <updated>1781164600509</updated>
       <workItem from="1781164601442" duration="1116000" />
       <workItem from="1781569503019" duration="19000" />
+      <workItem from="1781577075083" duration="714000" />
     </task>
     <servers />
   </component>

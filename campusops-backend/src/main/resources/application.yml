@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${SUPABASE_DB_URL}
@@ -6,8 +8,8 @@ spring:
     password: ${SUPABASE_DB_PASSWORD}
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 mybatis:
   mapper-locations: classpath:/mapper/**/*.xml
@@ -16,7 +18,7 @@ mybatis:
     map-underscore-to-camel-case: true
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:campusops-local-jwt-secret-key-must-be-long-enough-for-hs256}
   expiration: 86400000
 
 server:
