@@ -2755,6 +2755,7 @@ select:focus-visible {
   min-height: calc(100vh - 120px);
   display: grid;
   place-items: center;
+  padding: 2rem 0;
 }
 
 .auth-card,
@@ -2766,7 +2767,38 @@ select:focus-visible {
 
 .auth-card {
   width: min(520px, 100%);
+  position: relative;
+  overflow: hidden;
   padding: 2rem;
+  border: 1px solid #dce7f2;
+  box-shadow: 0 18px 42px rgba(15, 47, 87, 0.1);
+}
+
+.auth-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 8px;
+  background: linear-gradient(90deg, #08233f, #1f5f99);
+}
+
+.auth-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
+.auth-card__brand img {
+  width: 2.4rem;
+  height: 2.4rem;
+}
+
+.auth-card__brand span {
+  color: #0e2744;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
 }
 
 .auth-card h1,
@@ -2775,6 +2807,16 @@ select:focus-visible {
 .hero-panel h1 {
   margin-top: 0;
   color: var(--primary);
+}
+
+.auth-card h1 {
+  margin-bottom: 0.55rem;
+}
+
+.auth-card > p {
+  margin: 0 0 1.25rem;
+  color: #6b7a90;
+  line-height: 1.65;
 }
 
 .form-grid {
@@ -2810,6 +2852,7 @@ select:focus-visible {
 .auth-footer {
   margin-top: 1rem;
   color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .auth-footer a {

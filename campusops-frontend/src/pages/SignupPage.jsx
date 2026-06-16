@@ -26,8 +26,14 @@ export default function SignupPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <h1>CampusOps 회원가입</h1>
-        <form onSubmit={onSubmit} className="form-grid">
+        <div className="auth-card__brand">
+          <img src="/campusops-mark.svg" alt="" />
+          <span>CampusOps</span>
+        </div>
+        <span className="workspace-label">CREATE ACCOUNT</span>
+        <h1>회원가입</h1>
+        <p>CampusOps에서 신고, 대여, 예약 업무를 시작하세요.</p>
+        <form onSubmit={onSubmit} className="workspace-form">
           <label>아이디<input value={form.userId} onChange={(e) => setForm({ ...form, userId: e.target.value })} /></label>
           <label>비밀번호<input type="password" value={form.userPw} onChange={(e) => setForm({ ...form, userPw: e.target.value })} /></label>
           <label>이름<input value={form.userName} onChange={(e) => setForm({ ...form, userName: e.target.value })} /></label>

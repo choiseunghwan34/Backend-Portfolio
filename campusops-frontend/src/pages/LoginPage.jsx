@@ -26,9 +26,14 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <h1>CampusOps 로그인</h1>
-        <p>학교, 학원, 동아리 운영을 한 곳에서 관리하세요.</p>
-        <form onSubmit={onSubmit} className="form-grid">
+        <div className="auth-card__brand">
+          <img src="/campusops-mark.svg" alt="" />
+          <span>CampusOps</span>
+        </div>
+        <span className="workspace-label">WELCOME BACK</span>
+        <h1>운영 포털 로그인</h1>
+        <p>학교·학원 운영 업무를 한 곳에서 이어서 관리하세요.</p>
+        <form onSubmit={onSubmit} className="workspace-form">
           <label>
             아이디
             <input value={form.userId} onChange={(e) => setForm({ ...form, userId: e.target.value })} />
