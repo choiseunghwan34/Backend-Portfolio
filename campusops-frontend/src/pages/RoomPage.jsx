@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { roomApi } from '../api/roomApi';
 
 function statusClass(value = '') {
@@ -43,6 +44,14 @@ export default function RoomPage() {
       <div className="workspace-grid two">
         <section className="workspace-card">
           <div className="workspace-card__head"><div><h2>예약 신청</h2><p>예약 시간은 중복 신청 방지를 위해 임시 선점됩니다.</p></div></div>
+          <div className="workspace-list room-directory">
+            {rooms.map((room) => (
+              <Link className="workspace-row" key={room.roomNo} to={`/rooms/${room.roomNo}`}>
+                <div className="workspace-row__main"><strong>{room.roomName}</strong><span>{room.location || '위치 미정'} · {room.capacity || 0}명</span></div>
+                <span className={`status-pill ${statusClass(room.status)}`}>{room.status}</span>
+              </Link>
+            ))}
+          </div>
           <form className="workspace-form" onSubmit={reserve}>
             <label>공간 선택
               <select required value={form.roomNo} onChange={(e) => setForm({ ...form, roomNo: e.target.value })}>

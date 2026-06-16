@@ -8,8 +8,11 @@ import UserDashboard from './pages/UserDashboard';
 import NoticeListPage from './pages/NoticeListPage';
 import NoticeDetailPage from './pages/NoticeDetailPage';
 import ReportPage from './pages/ReportPage';
+import ReportDetailPage from './pages/ReportDetailPage';
 import AssetPage from './pages/AssetPage';
+import AssetDetailPage from './pages/AssetDetailPage';
 import RoomPage from './pages/RoomPage';
+import RoomDetailPage from './pages/RoomDetailPage';
 import NotificationPage from './pages/NotificationPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminNoticePage from './pages/AdminNoticePage';
@@ -35,8 +38,11 @@ export default function App() {
           <Route path="/notices" element={<ProtectedRoute><NoticeListPage /></ProtectedRoute>} />
           <Route path="/notices/:noticeNo" element={<ProtectedRoute><NoticeDetailPage /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
+          <Route path="/reports/:reportNo" element={<ProtectedRoute><ReportDetailPage /></ProtectedRoute>} />
           <Route path="/assets" element={<ProtectedRoute><AssetPage /></ProtectedRoute>} />
+          <Route path="/assets/:assetNo" element={<ProtectedRoute><AssetDetailPage /></ProtectedRoute>} />
           <Route path="/rooms" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
+          <Route path="/rooms/:roomNo" element={<ProtectedRoute><RoomDetailPage /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><NotificationPage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute role="ADMIN"><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/notices" element={<ProtectedRoute role="ADMIN"><AdminNoticePage /></ProtectedRoute>} />

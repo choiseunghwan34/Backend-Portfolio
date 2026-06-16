@@ -3361,8 +3361,103 @@ select:focus-visible {
 }
 
 .detail-article {
-  max-width: 980px;
+  max-width: 1160px;
   margin: 0 auto;
+}
+
+.detail-card {
+  padding: 1.5rem;
+}
+
+.detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.detail-head h1 {
+  margin: 0.45rem 0 0;
+  color: #10233f;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+
+.detail-head p {
+  margin: 0.65rem 0 0;
+  color: #6b7a90;
+}
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 1.4rem;
+  padding-top: 1.35rem;
+}
+
+.detail-body {
+  min-width: 0;
+}
+
+.detail-body h2 {
+  margin: 0 0 0.8rem;
+  color: #123b63;
+  font-size: 1rem;
+}
+
+.detail-side {
+  align-self: start;
+  display: grid;
+  overflow: hidden;
+  border: 1px solid #dce7f2;
+  border-radius: 16px;
+  background: #f8fbfe;
+}
+
+.detail-side > div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid #e8eff6;
+}
+
+.detail-side > div:last-child {
+  border-bottom: 0;
+}
+
+.detail-side span {
+  color: #6b7a90;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.detail-side strong {
+  color: #10233f;
+  font-size: 0.95rem;
+}
+
+.detail-side p {
+  margin: 0;
+  color: #52657a;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.detail-message {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #cceedd;
+  border-radius: 12px;
+  background: #effaf5;
+  color: #0d936b;
+  font-weight: 700;
+}
+
+.room-directory {
+  margin-bottom: 1rem;
 }
 
 @keyframes navDrop {
@@ -3604,6 +3699,14 @@ select:focus-visible {
 }
 
 @media (max-width: 760px) {
+  .detail-head {
+    display: grid;
+  }
+
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
   .workspace-hero {
     display: grid;
     min-height: auto;

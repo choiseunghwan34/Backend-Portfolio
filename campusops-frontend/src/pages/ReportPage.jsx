@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { reportApi } from '../api/reportApi';
 
 function statusClass(value = '') {
@@ -50,13 +51,13 @@ export default function ReportPage() {
           <div className="workspace-card__head"><div><h2>내 신고 목록</h2><p>접수 후 처리 상태와 관리자 답변을 확인합니다.</p></div></div>
           <div className="workspace-list">
             {myReports.map((report) => (
-              <div className="workspace-row" key={report.reportNo}>
+              <Link className="workspace-row" key={report.reportNo} to={`/reports/${report.reportNo}`}>
                 <div className="workspace-row__main">
                   <strong>{report.title}</strong>
                   <span>{report.place} · {report.category || '기타'}{report.adminReply ? ` · 답변: ${report.adminReply}` : ''}</span>
                 </div>
                 <span className={`status-pill ${statusClass(report.status)}`}>{report.status}</span>
-              </div>
+              </Link>
             ))}
             {!myReports.length ? <div className="workspace-empty">아직 등록한 신고가 없습니다.</div> : null}
           </div>

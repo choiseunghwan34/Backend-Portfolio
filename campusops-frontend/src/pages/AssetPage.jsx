@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { assetApi } from '../api/assetApi';
 
 function statusClass(value = '') {
@@ -39,10 +40,10 @@ export default function AssetPage() {
           <div className="workspace-list">
             {assets.map((asset) => (
               <div className="workspace-row" key={asset.assetNo}>
-                <div className="workspace-row__main">
+                <Link className="workspace-row__main" to={`/assets/${asset.assetNo}`}>
                   <strong>{asset.assetName}</strong>
                   <span>{asset.category || '기타'} · {asset.description || '설명 없음'}</span>
-                </div>
+                </Link>
                 <div className="workspace-row__actions">
                   <span className={`status-pill ${statusClass(asset.status)}`}>{asset.status}</span>
                   <button className="secondary-button" disabled={asset.status !== 'AVAILABLE'} onClick={() => rent(asset.assetNo)}>대여 신청</button>
