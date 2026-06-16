@@ -15,6 +15,9 @@ export default function NoticeDetailPage() {
 
   if (!notice) return <div className="workspace-card detail-article">불러오는 중...</div>;
 
+  const createdDate = String(notice.createdAt || '').slice(0, 10) || '-';
+  const updatedDate = String(notice.updatedAt || notice.createdAt || '').slice(0, 10) || '-';
+
   return (
     <div className="workspace-page detail-article">
       <article className="workspace-card detail-card">
@@ -22,7 +25,12 @@ export default function NoticeDetailPage() {
           <div>
             <span className="workspace-label">NOTICE DETAIL</span>
             <h1>{notice.title}</h1>
-            <p>{notice.category || '기타'} · 조회수 {notice.viewCount} · {String(notice.createdAt || '').slice(0, 10)}</p>
+            <div className="detail-meta">
+              {notice.importantYn ? <span className="detail-badge important">중요</span> : null}
+              <span className="detail-badge">{notice.category || '공지'}</span>
+              <span>{createdDate}</span>
+              <span>조회 {notice.viewCount?.toLocaleString?.() || notice.viewCount || 0}</span>
+            </div>
           </div>
           <Link className="secondary-button" to="/notices">목록</Link>
         </div>
@@ -32,10 +40,14 @@ export default function NoticeDetailPage() {
             <p className="body-text">{notice.content}</p>
           </section>
           <aside className="detail-side">
-            <div><span>분류</span><strong>{notice.category || '기타'}</strong></div>
-            <div><span>중요 공지</span><strong>{notice.importantYn ? '예' : '아니오'}</strong></div>
-            <div><span>조회수</span><strong>{notice.viewCount}</strong></div>
-            <div><span>최종 수정</span><p>{String(notice.updatedAt || notice.createdAt || '').slice(0, 10) || '-'}</p></div>
+            <div className="detail-side__summary">
+              <span>게시 정보</span>
+              <strong>{notice.importantYn ? '상단 고정 공지' : '일반 공지'}</strong>
+              <p>{notice.category || '공지'} 카테고리에 등록된 안내입니다.</p>
+            </div>
+            <div><span>등록일</span><strong>{createdDate}</strong></div>
+            <div><span>수정일</span><strong>{updatedDate}</strong></div>
+            <div><span>조회</span><strong>{notice.viewCount?.toLocaleString?.() || notice.viewCount || 0}회</strong></div>
           </aside>
         </div>
       </article>
