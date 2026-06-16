@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authApi } from '../api/authApi';
-import { setSession } from '../utils/auth';
+import { clearSavedUserId, getSavedUserId, setSavedUserId, setSession } from '../utils/auth';
 
 export default function LoginPage() {
-  const [form, setForm] = useState({ userId: '', userPw: '' });
+  const savedUserId = getSavedUserId();
+  const [form, setForm] = useState({ userId: savedUserId, userPw: '' });
+  const [options, setOptions] = useState({ rememberId: Boolean(savedUserId), autoLogin: true });
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -15,8 +17,14 @@ export default function LoginPage() {
       const { data } = await authApi.login(form);
       setSession({
         token: data.data.token,
-        user: { userNo: data.data.userNo, userId: data.data.userId, userName: data.data.userName, role: data.data.role }
+        user: { userNo: data.data.userNo, userId: data.data.userId, userName: data.data.userName, role: data.data.role },
+        autoLogin: options.autoLogin
       });
+      if (options.rememberId) {
+        setSavedUserId(form.userId);
+      } else {
+        clearSavedUserId();
+      }
       navigate(data.data.role === 'ADMIN' ? '/admin' : '/dashboard');
     } catch (err) {
       setError(err?.response?.data?.message || '로그인에 실패했습니다.');
@@ -42,6 +50,24 @@ export default function LoginPage() {
             비밀번호
             <input type="password" value={form.userPw} onChange={(e) => setForm({ ...form, userPw: e.target.value })} />
           </label>
+          <div className="auth-options">
+            <label>
+              <input
+                type="checkbox"
+                checked={options.rememberId}
+                onChange={(e) => setOptions({ ...options, rememberId: e.target.checked })}
+              />
+              <span>아이디 저장</span>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={options.autoLogin}
+                onChange={(e) => setOptions({ ...options, autoLogin: e.target.checked })}
+              />
+              <span>자동 로그인</span>
+            </label>
+          </div>
           {error ? <div className="form-error">{error}</div> : null}
           <button className="primary-button" type="submit">로그인</button>
         </form>

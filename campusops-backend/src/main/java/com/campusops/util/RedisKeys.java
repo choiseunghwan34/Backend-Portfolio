@@ -23,4 +23,12 @@ public class RedisKeys {
     public static String recentNotices() {
         return "notice:recent";
     }
+
+    public static String activeToken(Long userNo, String tokenHash) {
+        return "auth:token:" + userNo + ":" + tokenHash;
+    }
+
+    public static String tokenBlacklist(String tokenHash) {
+        return "auth:blacklist:" + tokenHash;
+    }
 }

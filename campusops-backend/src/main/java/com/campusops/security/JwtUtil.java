@@ -10,7 +10,10 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.HexFormat;
 
 @Component
 public class JwtUtil {
@@ -49,5 +52,20 @@ public class JwtUtil {
     public TokenPrincipalDTO parseToken(String token) {
         Claims claims = Jwts.parser().verifyWith(key()).build().parseSignedClaims(token).getPayload();
         return new TokenPrincipalDTO(Long.valueOf(claims.getSubject()), claims.get("userId", String.class), claims.get("role", String.class));
+    }
+
+    public long remainingMillis(String token) {
+        Claims claims = Jwts.parser().verifyWith(key()).build().parseSignedClaims(token).getPayload();
+        long remaining = claims.getExpiration().getTime() - System.currentTimeMillis();
+        return Math.max(remaining, 0);
+    }
+
+    public String tokenHash(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(token.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm is not available.", e);
+        }
     }
 }

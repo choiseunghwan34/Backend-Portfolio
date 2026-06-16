@@ -19,22 +19,31 @@ export default function NotificationPage() {
   const unread = notifications.filter((item) => !item.readYn).length;
 
   return (
-    <div className="workspace-page">
-      <section className="workspace-hero">
-        <div className="workspace-hero__copy">
+    <div className="service-page service-page--notification">
+      <section className="service-hero">
+        <div>
           <span className="workspace-label">NOTIFICATION CENTER</span>
           <h1>알림센터</h1>
-          <p>신고 처리, 대여 승인, 예약 변경 등 CampusOps 처리 결과를 확인합니다.</p>
+          <p>신고 처리, 대여 승인, 예약 변경 등 CampusOps의 업무 처리 결과를 확인합니다.</p>
         </div>
-        <div className="workspace-hero__aside"><span>읽지 않은 알림</span><strong>{unread}건</strong></div>
+        <dl>
+          <div><dt>전체 알림</dt><dd>{notifications.length}건</dd></div>
+          <div><dt>읽지 않음</dt><dd>{unread}건</dd></div>
+        </dl>
       </section>
 
-      <section className="workspace-card">
-        <div className="workspace-card__head"><div><h2>내 알림</h2><p>읽음 처리한 알림은 흐리게 표시됩니다.</p></div></div>
-        <div className="workspace-list">
+      <section className="service-guide">
+        <strong>알림 안내</strong>
+        <p>처리 결과를 확인한 알림은 읽음 처리할 수 있습니다. 중요한 운영 알림은 업무 진행 상태와 함께 계속 보관됩니다.</p>
+      </section>
+
+      <section className="service-panel">
+        <header><span>MY NOTIFICATIONS</span><h2>내 알림</h2></header>
+        <div className="notice-inbox">
           {notifications.map((notification) => (
-            <div className={`workspace-row ${notification.readYn ? 'muted' : ''}`} key={notification.notificationNo}>
-              <div className="workspace-row__main">
+            <div className={`notice-inbox__row ${notification.readYn ? 'read' : ''}`} key={notification.notificationNo}>
+              <i />
+              <div>
                 <strong>{notification.title}</strong>
                 <span>{notification.content} · {String(notification.createdAt || '').slice(0, 10)}</span>
               </div>

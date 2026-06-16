@@ -6,6 +6,20 @@ function statusClass(value = '') {
   return String(value).toLowerCase();
 }
 
+const assetStatusText = {
+  AVAILABLE: '대여 가능',
+  RENTED: '대여중',
+  DISABLED: '사용 중지'
+};
+
+const rentalStatusText = {
+  REQUESTED: '신청',
+  APPROVED: '승인',
+  REJECTED: '반려',
+  RETURNED: '반납',
+  OVERDUE: '연체'
+};
+
 export default function AssetPage() {
   const [assets, setAssets] = useState([]);
   const [myRentals, setMyRentals] = useState([]);
@@ -24,28 +38,36 @@ export default function AssetPage() {
   };
 
   return (
-    <div className="workspace-page">
-      <section className="workspace-hero">
-        <div className="workspace-hero__copy">
+    <div className="service-page service-page--asset">
+      <section className="service-hero">
+        <div>
           <span className="workspace-label">ASSET RENTAL</span>
           <h1>기자재 대여</h1>
-          <p>노트북, 태블릿, 카메라, 프로젝터 등 학습 운영에 필요한 기자재를 신청합니다.</p>
+          <p>수업, 행사, 세미나 운영에 필요한 기자재를 확인하고 대여를 신청하세요.</p>
         </div>
-        <div className="workspace-hero__aside"><span>대여 가능 기자재</span><strong>{assets.filter((a) => a.status === 'AVAILABLE').length}개</strong></div>
+        <dl>
+          <div><dt>대여 가능</dt><dd>{assets.filter((a) => a.status === 'AVAILABLE').length}개</dd></div>
+          <div><dt>내 신청</dt><dd>{myRentals.length}건</dd></div>
+        </dl>
       </section>
 
-      <div className="workspace-grid two">
-        <section className="workspace-card">
-          <div className="workspace-card__head"><div><h2>기자재 목록</h2><p>사용 가능한 기자재를 확인하고 대여 신청하세요.</p></div></div>
-          <div className="workspace-list">
+      <section className="service-guide">
+        <strong>대여 이용 안내</strong>
+        <p>대여 신청 후 관리자의 승인 상태를 확인해 주세요. 기본 대여 기간은 7일이며, 반납 처리는 관리자 확인 후 반영됩니다.</p>
+      </section>
+
+      <div className="service-layout">
+        <section className="service-panel service-panel--wide">
+          <header><span>EQUIPMENT LIST</span><h2>기자재 목록</h2></header>
+          <div className="service-list">
             {assets.map((asset) => (
-              <div className="workspace-row" key={asset.assetNo}>
-                <Link className="workspace-row__main" to={`/assets/${asset.assetNo}`}>
+              <div className="service-row" key={asset.assetNo}>
+                <Link to={`/assets/${asset.assetNo}`}>
                   <strong>{asset.assetName}</strong>
                   <span>{asset.category || '기타'} · {asset.description || '설명 없음'}</span>
                 </Link>
-                <div className="workspace-row__actions">
-                  <span className={`status-pill ${statusClass(asset.status)}`}>{asset.status}</span>
+                <div className="service-row__actions">
+                  <span className={`status-pill ${statusClass(asset.status)}`}>{assetStatusText[asset.status] || asset.status}</span>
                   <button className="secondary-button" disabled={asset.status !== 'AVAILABLE'} onClick={() => rent(asset.assetNo)}>대여 신청</button>
                 </div>
               </div>
@@ -53,16 +75,16 @@ export default function AssetPage() {
           </div>
         </section>
 
-        <section className="workspace-card">
-          <div className="workspace-card__head"><div><h2>내 대여 내역</h2><p>승인 상태와 반납 예정일을 확인합니다.</p></div></div>
-          <div className="workspace-list">
+        <section className="service-panel">
+          <header><span>MY RENTALS</span><h2>내 대여 내역</h2></header>
+          <div className="service-list">
             {myRentals.map((rental) => (
-              <div className="workspace-row" key={rental.rentalNo}>
-                <div className="workspace-row__main">
+              <div className="service-row" key={rental.rentalNo}>
+                <div>
                   <strong>기자재 #{rental.assetNo}</strong>
                   <span>반납 예정 {String(rental.returnDueDate || '').slice(0, 10) || '-'}</span>
                 </div>
-                <span className={`status-pill ${statusClass(rental.rentalStatus)}`}>{rental.rentalStatus}</span>
+                <span className={`status-pill ${statusClass(rental.rentalStatus)}`}>{rentalStatusText[rental.rentalStatus] || rental.rentalStatus}</span>
               </div>
             ))}
             {!myRentals.length ? <div className="workspace-empty">대여 신청 내역이 없습니다.</div> : null}

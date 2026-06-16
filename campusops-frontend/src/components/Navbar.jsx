@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { authApi } from '../api/authApi';
 import { getCurrentUser, clearSession } from '../utils/auth';
 
 export default function Navbar() {
@@ -7,9 +8,13 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const logout = () => {
-    clearSession();
-    navigate('/home');
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      clearSession();
+      navigate('/home');
+    }
   };
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(`${path}/`);
