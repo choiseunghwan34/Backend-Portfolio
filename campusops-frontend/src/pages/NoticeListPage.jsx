@@ -16,7 +16,7 @@ export default function NoticeListPage() {
   useEffect(() => { load(1); }, []);
 
   return (
-    <div className="workspace-page">
+    <div className="workspace-page notice-page">
       <section className="workspace-hero">
         <div className="workspace-hero__copy">
           <span className="workspace-label">NOTICE CENTER</span>
@@ -26,22 +26,23 @@ export default function NoticeListPage() {
         <div className="workspace-hero__aside"><span>등록된 공지</span><strong>{pageData.total || pageData.items.length}건</strong></div>
       </section>
 
-      <section className="workspace-card">
+      <section className="workspace-card notice-card">
         <div className="workspace-card__head">
           <div><h2>공지 목록</h2><p>키워드로 제목과 내용을 검색할 수 있습니다.</p></div>
-          <div className="toolbar">
+          <div className="toolbar notice-search">
             <input value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load(1)} placeholder="검색어 입력" />
             <button className="secondary-button" onClick={() => load(1)}>검색</button>
           </div>
         </div>
-        <div className="workspace-list">
+        <div className="notice-list">
           {pageData.items.map((notice) => (
-            <Link className="workspace-row" key={notice.noticeNo} to={`/notices/${notice.noticeNo}`}>
-              <div className="workspace-row__main">
-                <strong className="notice-title">{notice.importantYn ? <i className="important-dot" /> : null}{notice.title}</strong>
-                <span>{notice.category || '기타'} · 조회수 {notice.viewCount}</span>
+            <Link className="notice-row" key={notice.noticeNo} to={`/notices/${notice.noticeNo}`}>
+              <span className={`notice-badge ${notice.importantYn ? 'important' : ''}`}>{notice.importantYn ? '중요' : notice.category || '공지'}</span>
+              <div className="notice-row__content">
+                <strong>{notice.title}</strong>
+                <span>{notice.category || '공지'} · 조회 {notice.viewCount?.toLocaleString?.() || notice.viewCount || 0}</span>
               </div>
-              <span className="workspace-row__meta">{String(notice.createdAt || '').slice(0, 10)}</span>
+              <time>{String(notice.createdAt || '').slice(0, 10)}</time>
             </Link>
           ))}
           {!pageData.items.length ? <div className="workspace-empty">검색 결과가 없습니다.</div> : null}
