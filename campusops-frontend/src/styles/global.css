@@ -3447,6 +3447,48 @@ select:focus-visible {
   font-size: 1rem;
 }
 
+.detail-response,
+.detail-action-panel {
+  margin-top: 1.25rem;
+  border: 1px solid #dce7f2;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  box-shadow: 0 10px 24px rgba(15, 47, 87, 0.05);
+}
+
+.detail-response {
+  padding: 1.15rem;
+}
+
+.detail-response h3,
+.detail-action-panel h3 {
+  margin: 0.35rem 0 0;
+  color: #10233f;
+  font-size: 1.05rem;
+}
+
+.detail-response p,
+.detail-action-panel p {
+  margin: 0.55rem 0 0;
+  color: #52657a;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.detail-action-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem;
+}
+
+.detail-action-panel .primary-button,
+.detail-action-panel .secondary-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .detail-side {
   align-self: start;
   display: grid;
@@ -3752,6 +3794,11 @@ select:focus-visible {
 
   .detail-layout {
     grid-template-columns: 1fr;
+  }
+
+  .detail-action-panel {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .workspace-hero {
