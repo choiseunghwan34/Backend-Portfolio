@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { authApi } from '../api/authApi';
 import { assetApi } from '../api/assetApi';
 import { noticeApi } from '../api/noticeApi';
 import { notificationApi } from '../api/notificationApi';
 import { reportApi } from '../api/reportApi';
 import { roomApi } from '../api/roomApi';
-import { getCurrentUser } from '../utils/auth';
+import { clearSession, getCurrentUser } from '../utils/auth';
 
 const quickServices = [
   { no: '01', title: '강의실 예약', description: '오늘 가능한 강의실 확인', to: '/rooms' },
@@ -32,27 +33,9 @@ const guides = [
   '알림센터에서 처리 결과를 확인하는 방법'
 ];
 
-const reportStatusText = {
-  RECEIVED: '접수',
-  CHECKING: '확인중',
-  COMPLETED: '완료',
-  REJECTED: '반려'
-};
-
-const rentalStatusText = {
-  REQUESTED: '접수',
-  APPROVED: '승인',
-  REJECTED: '반려',
-  RETURNED: '반납',
-  OVERDUE: '연체'
-};
-
-const reservationStatusText = {
-  RESERVED: '예약',
-  CANCELLED: '취소',
-  COMPLETED: '완료'
-};
-
+const reportStatusText = { RECEIVED: '접수', CHECKING: '확인중', COMPLETED: '완료', REJECTED: '반려' };
+const rentalStatusText = { REQUESTED: '접수', APPROVED: '승인', REJECTED: '반려', RETURNED: '반납', OVERDUE: '연체' };
+const reservationStatusText = { RESERVED: '예약', CANCELLED: '취소', COMPLETED: '완료' };
 const toneByStatus = {
   RECEIVED: 'waiting',
   REQUESTED: 'waiting',
@@ -103,14 +86,15 @@ function LineIcon({ name }) {
     notice: <><path d="M4 13V9l13-5v14L4 13ZM17 8h3M7 14l1 5h4l-2-4" /></>,
     edit: <><path d="m4 20 4.5-1 10-10-3.5-3.5-10 10L4 20ZM13.5 7l3.5 3.5" /></>,
     box: <><path d="m12 3 9 5-9 5-9-5 9-5ZM3 8v9l9 5 9-5V8M12 13v9" /></>,
-    chat: <><path d="M21 12a8 8 0 0 1-8 8H7l-4 2 1.5-4A8 8 0 1 1 21 12Z" /><path d="M8 12h.01M12 12h.01M16 12h.01" /></>,
-    tool: <><path d="M14.5 6.5a4 4 0 0 0-5 5L4 17l3 3 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-3-3 2.5-2.5Z" /></>
+    chat: <><path d="M21 12a8 8 0 0 1-8 8H7l-4 2 1.5-4A8 8 0 1 1 21 12Z" /><path d="M8 12h.01M12 12h.01M16 12h.01" /></>
   };
 
   return <svg viewBox="0 0 24 24" aria-hidden="true">{icons[name]}</svg>;
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
+  const currentUser = getCurrentUser();
   const [activeTab, setActiveTab] = useState('reports');
   const [home, setHome] = useState({
     notices: [],
@@ -124,9 +108,18 @@ export default function HomePage() {
     error: ''
   });
 
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      clearSession();
+      navigate('/home');
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
-    const currentUser = getCurrentUser();
+    const user = getCurrentUser();
 
     async function loadHomeData() {
       const [noticeRes, assetRes, roomRes] = await Promise.allSettled([
@@ -135,7 +128,7 @@ export default function HomePage() {
         roomApi.list({ skipAuth: true })
       ]);
 
-      const privateResults = currentUser
+      const privateResults = user
         ? await Promise.allSettled([
             reportApi.my(),
             assetApi.myRentals(),
@@ -146,21 +139,14 @@ export default function HomePage() {
 
       if (!mounted) return;
 
-      const noticePayload = unwrap(noticeRes);
-      const assets = toArray(unwrap(assetRes));
-      const rooms = toArray(unwrap(roomRes));
-      const reports = toArray(unwrap(privateResults[0]));
-      const rentals = toArray(unwrap(privateResults[1]));
-      const reservations = toArray(unwrap(privateResults[2]));
       const unreadPayload = unwrap(privateResults[3], 0);
-
       setHome({
-        notices: toArray(noticePayload),
-        assets,
-        rooms,
-        reports,
-        rentals,
-        reservations,
+        notices: toArray(unwrap(noticeRes)),
+        assets: toArray(unwrap(assetRes)),
+        rooms: toArray(unwrap(roomRes)),
+        reports: toArray(unwrap(privateResults[0])),
+        rentals: toArray(unwrap(privateResults[1])),
+        reservations: toArray(unwrap(privateResults[2])),
         unreadCount: Number(unreadPayload?.count ?? unreadPayload ?? 0),
         loading: false,
         error: [noticeRes, assetRes, roomRes, ...privateResults].some((result) => result.status === 'rejected')
@@ -174,9 +160,7 @@ export default function HomePage() {
       setHome((prev) => ({ ...prev, loading: false, error: '운영 데이터를 불러오지 못했습니다.' }));
     });
 
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   const derived = useMemo(() => {
@@ -239,6 +223,7 @@ export default function HomePage() {
   }, [home]);
 
   const activeWork = derived.workTabs.find((tab) => tab.id === activeTab) || derived.workTabs[0];
+  const dashboardPath = currentUser?.role === 'ADMIN' ? '/admin' : '/dashboard';
 
   return (
     <div className="reference-home">
@@ -250,8 +235,17 @@ export default function HomePage() {
               <h1>도전과 창조의<br />운영 포털</h1>
               <p>통합형 업무 · 예약형 업무 · 공지형 업무를 한 화면에서 연결하는<br />스마트한 캠퍼스 운영 플랫폼입니다.</p>
               <div className="reference-hero__buttons">
-                <Link to="/login" className="reference-button reference-button--light">로그인 <span>→</span></Link>
-                <Link to="/signup" className="reference-button reference-button--ghost">회원가입 <span>→</span></Link>
+                {currentUser ? (
+                  <>
+                    <Link to={dashboardPath} className="reference-button reference-button--light">대시보드 <span>→</span></Link>
+                    <button type="button" className="reference-button reference-button--ghost" onClick={logout}>로그아웃 <span>→</span></button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="reference-button reference-button--light">로그인 <span>→</span></Link>
+                    <Link to="/signup" className="reference-button reference-button--ghost">회원가입 <span>→</span></Link>
+                  </>
+                )}
               </div>
             </div>
 
@@ -314,7 +308,7 @@ export default function HomePage() {
         <article className="reference-card reference-guide">
           <header className="reference-card__head">
             <h2><LineIcon name="building" />서비스 가이드</h2>
-            <Link to="/login">더보기 <span>›</span></Link>
+            <Link to="/notices">더보기 <span>›</span></Link>
           </header>
           <div className="reference-guide__list">
             {guides.map((guide, index) => (
@@ -344,14 +338,7 @@ export default function HomePage() {
             <h2>최근 업무 현황</h2>
             <div className="reference-tabs" role="tablist" aria-label="최근 업무 종류">
               {derived.workTabs.map((tab) => (
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === tab.id}
-                  className={activeTab === tab.id ? 'active' : ''}
-                  onClick={() => setActiveTab(tab.id)}
-                  key={tab.id}
-                >
+                <button type="button" role="tab" aria-selected={activeTab === tab.id} className={activeTab === tab.id ? 'active' : ''} onClick={() => setActiveTab(tab.id)} key={tab.id}>
                   {tab.label}
                 </button>
               ))}
@@ -372,7 +359,7 @@ export default function HomePage() {
           <div>
             <h2>더 나은 캠퍼스, 함께 만들어갑니다</h2>
             <p>CampusOps는 구성원 모두의 참여로<br />더 안전하고 편리한 캠퍼스를 만들어갑니다.</p>
-            <Link to="/login">이용 안내 보기 <span>→</span></Link>
+            <Link to="/notices">이용 안내 보기 <span>→</span></Link>
           </div>
           <img className="reference-banner__mark" src="/campusops-mark.svg" alt="" />
         </article>

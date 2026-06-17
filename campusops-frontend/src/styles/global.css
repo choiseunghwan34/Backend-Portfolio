@@ -2153,6 +2153,7 @@ select:focus-visible {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 1.1rem;
+  border: 0;
   border-radius: 10px;
   font-size: 0.88rem;
   font-weight: 750;
@@ -3360,6 +3361,71 @@ select:focus-visible {
 .toolbar input:focus {
   outline: 3px solid rgba(47, 128, 237, 0.16);
   border-color: #8bb9e8;
+}
+
+.workspace-form .auth-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin: -0.2rem 0 0.1rem;
+}
+
+.workspace-form .auth-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.44rem;
+  margin: 0;
+  color: #52657a;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.workspace-form .auth-options input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 4px;
+  accent-color: #123b63;
+}
+
+.demo-login {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e4ecf5;
+}
+
+.demo-login__head {
+  display: grid;
+  gap: 0.24rem;
+  margin-bottom: 0.75rem;
+}
+
+.demo-login__head strong {
+  color: #10233f;
+  font-size: 0.92rem;
+}
+
+.demo-login__head span {
+  color: #6b778c;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.demo-login__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.demo-login__grid .secondary-button {
+  min-height: 42px;
+  justify-content: center;
+  font-size: 0.82rem;
 }
 
 .workspace-actions {
@@ -5068,6 +5134,10 @@ select:focus-visible {
   .app-main {
     width: min(100% - 1rem, var(--content-max));
     padding-top: 0.75rem;
+  }
+
+  .demo-login__grid {
+    grid-template-columns: 1fr;
   }
 
   .workspace-stats {

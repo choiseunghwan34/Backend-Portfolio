@@ -1,34 +1,47 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { clearSavedUserId, getSavedUserId, setSavedUserId, setSession } from '../utils/auth';
+
+const demoAccounts = {
+  user: { userId: 'user01', userPw: 'User123!' },
+  admin: { userId: 'admin', userPw: 'Admin123!' }
+};
 
 export default function LoginPage() {
   const savedUserId = getSavedUserId();
   const [form, setForm] = useState({ userId: savedUserId, userPw: '' });
   const [options, setOptions] = useState({ rememberId: Boolean(savedUserId), autoLogin: true });
   const [error, setError] = useState('');
+  const [loadingType, setLoadingType] = useState('');
   const navigate = useNavigate();
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
+  const loginWith = async (payload, type = 'form') => {
     setError('');
+    setLoadingType(type);
     try {
-      const { data } = await authApi.login(form);
+      const { data } = await authApi.login(payload);
       setSession({
         token: data.data.token,
         user: { userNo: data.data.userNo, userId: data.data.userId, userName: data.data.userName, role: data.data.role },
         autoLogin: options.autoLogin
       });
       if (options.rememberId) {
-        setSavedUserId(form.userId);
+        setSavedUserId(payload.userId);
       } else {
         clearSavedUserId();
       }
       navigate(data.data.role === 'ADMIN' ? '/admin' : '/dashboard');
     } catch (err) {
       setError(err?.response?.data?.message || '로그인에 실패했습니다.');
+    } finally {
+      setLoadingType('');
     }
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    await loginWith(form, 'form');
   };
 
   return (
@@ -41,6 +54,7 @@ export default function LoginPage() {
         <span className="workspace-label">WELCOME BACK</span>
         <h1>운영 포털 로그인</h1>
         <p>학교·학원 운영 업무를 한 곳에서 이어서 관리하세요.</p>
+
         <form onSubmit={onSubmit} className="workspace-form">
           <label>
             아이디
@@ -50,27 +64,39 @@ export default function LoginPage() {
             비밀번호
             <input type="password" value={form.userPw} onChange={(e) => setForm({ ...form, userPw: e.target.value })} />
           </label>
+
           <div className="auth-options">
             <label>
-              <input
-                type="checkbox"
-                checked={options.rememberId}
-                onChange={(e) => setOptions({ ...options, rememberId: e.target.checked })}
-              />
+              <input type="checkbox" checked={options.rememberId} onChange={(e) => setOptions({ ...options, rememberId: e.target.checked })} />
               <span>아이디 저장</span>
             </label>
             <label>
-              <input
-                type="checkbox"
-                checked={options.autoLogin}
-                onChange={(e) => setOptions({ ...options, autoLogin: e.target.checked })}
-              />
+              <input type="checkbox" checked={options.autoLogin} onChange={(e) => setOptions({ ...options, autoLogin: e.target.checked })} />
               <span>자동 로그인</span>
             </label>
           </div>
+
           {error ? <div className="form-error">{error}</div> : null}
-          <button className="primary-button" type="submit">로그인</button>
+          <button className="primary-button" type="submit" disabled={Boolean(loadingType)}>
+            {loadingType === 'form' ? '로그인 중...' : '로그인'}
+          </button>
         </form>
+
+        <div className="demo-login">
+          <div className="demo-login__head">
+            <strong>체험 계정으로 바로 시작</strong>
+            <span>별도 가입 없이 주요 기능을 확인할 수 있습니다.</span>
+          </div>
+          <div className="demo-login__grid">
+            <button type="button" className="secondary-button" disabled={Boolean(loadingType)} onClick={() => loginWith(demoAccounts.user, 'user')}>
+              {loadingType === 'user' ? '로그인 중...' : '일반회원 로그인'}
+            </button>
+            <button type="button" className="secondary-button" disabled={Boolean(loadingType)} onClick={() => loginWith(demoAccounts.admin, 'admin')}>
+              {loadingType === 'admin' ? '로그인 중...' : '관리자계정 로그인'}
+            </button>
+          </div>
+        </div>
+
         <div className="auth-footer">
           계정이 없나요? <Link to="/signup">회원가입</Link>
         </div>
