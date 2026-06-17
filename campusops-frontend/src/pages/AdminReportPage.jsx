@@ -35,7 +35,7 @@ export default function AdminReportPage() {
   };
 
   return (
-    <div className="workspace-page">
+    <div className="workspace-page admin-page">
       <section className="workspace-hero">
         <div className="workspace-hero__copy">
           <span className="workspace-label">REPORT ADMIN</span>

@@ -37,10 +37,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponseDTO signup(AuthRequestDTO request) {
         if (request.getUserName() == null || request.getUserName().isBlank()) {
-            throw new BusinessException("이름을 입력해주세요.");
+            throw new BusinessException("이름을 입력해 주세요.");
         }
         if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new BusinessException("이메일을 입력해주세요.");
+            throw new BusinessException("이메일을 입력해 주세요.");
         }
         if (userDao.selectByUserId(request.getUserId()) != null) {
             throw new BusinessException("이미 존재하는 아이디입니다.");
@@ -55,6 +55,7 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(request.getEmail());
         user.setRole("USER");
         userDao.insertUser(user);
+
         UserVO saved = userDao.selectByUserId(request.getUserId());
         String token = jwtUtil.generateToken(new TokenPrincipalDTO(saved.getUserNo(), saved.getUserId(), saved.getRole()), defaultExpirationMillis);
         cacheActiveToken(saved, token);
@@ -67,6 +68,7 @@ public class AuthServiceImpl implements AuthService {
         if (user == null || !passwordEncoder.matches(PasswordUtil.normalize(request.getUserPw()), user.getUserPw())) {
             throw new BusinessException("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
         }
+
         boolean duplicateLogin = invalidateActiveTokens(user.getUserNo());
         long expirationMillis = Boolean.TRUE.equals(request.getAutoLogin()) ? autoLoginExpirationMillis : defaultExpirationMillis;
         String token = jwtUtil.generateToken(new TokenPrincipalDTO(user.getUserNo(), user.getUserId(), user.getRole()), expirationMillis);
@@ -126,6 +128,7 @@ public class AuthServiceImpl implements AuthService {
         if (tokenHashes == null || tokenHashes.isEmpty()) {
             return false;
         }
+
         boolean invalidated = false;
         long now = System.currentTimeMillis();
         for (Object tokenHashObject : tokenHashes) {
@@ -134,7 +137,11 @@ public class AuthServiceImpl implements AuthService {
             Object expiresAtValue = redisTemplate.opsForValue().get(activeTokenKey);
             long remainingMillis = readRemainingMillis(expiresAtValue, now);
             if (remainingMillis > 0) {
-                redisTemplate.opsForValue().set(RedisKeys.tokenBlacklist(tokenHash), RedisKeys.BLACKLIST_DUPLICATE_LOGIN, Duration.ofMillis(remainingMillis));
+                redisTemplate.opsForValue().set(
+                        RedisKeys.tokenBlacklist(tokenHash),
+                        RedisKeys.BLACKLIST_DUPLICATE_LOGIN,
+                        Duration.ofMillis(remainingMillis)
+                );
                 invalidated = true;
             }
             redisTemplate.delete(activeTokenKey);

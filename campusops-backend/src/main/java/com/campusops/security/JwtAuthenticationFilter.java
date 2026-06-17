@@ -41,11 +41,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     writeUnauthorized(response, "LOGOUT", "로그아웃된 세션입니다.");
                     return;
                 }
+
                 TokenPrincipalDTO principal = jwtUtil.parseToken(token);
                 if (!Boolean.TRUE.equals(redisTemplate.hasKey(RedisKeys.activeToken(principal.getUserNo(), tokenHash)))) {
                     writeUnauthorized(response, "SESSION_INACTIVE", "세션이 종료되었습니다. 다시 로그인해 주세요.");
                     return;
                 }
+
                 AuthContextHolder.set(principal);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(

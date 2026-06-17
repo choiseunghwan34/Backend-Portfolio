@@ -17,9 +17,7 @@ client.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401) {
-      if (error?.config?.skipAuth) {
-        return Promise.reject(error);
-      }
+      if (error?.config?.skipAuth) return Promise.reject(error);
       const message = error?.response?.data?.message || '세션이 종료되었습니다. 다시 로그인해 주세요.';
       clearSession();
       setAuthNotice(message);

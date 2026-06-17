@@ -47,9 +47,9 @@ export default function Navbar() {
             >
               대시보드
             </Link>
-            <span className="navbar__user" title={displayName}>
+            <span className={`navbar__user ${user.role === 'ADMIN' ? 'navbar__user--admin' : ''}`} title={displayName}>
               <span className="navbar__user-dot" />
-              {displayName}
+              {user.role === 'ADMIN' ? '관리자' : displayName}
             </span>
             <button className="text-button" type="button" onClick={logout}>로그아웃</button>
           </>
