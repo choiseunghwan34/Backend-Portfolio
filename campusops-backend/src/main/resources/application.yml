@@ -14,6 +14,17 @@ spring:
       password: ${REDIS_PASSWORD:}
       ssl:
         enabled: ${REDIS_SSL:false}
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS:true}
 
 mybatis:
   mapper-locations: classpath:/mapper/**/*.xml
@@ -25,6 +36,14 @@ jwt:
   secret: ${JWT_SECRET:campusops-local-jwt-secret-key-must-be-long-enough-for-hs256}
   expiration: ${JWT_EXPIRATION:7200000}
   auto-login-expiration: ${JWT_AUTO_LOGIN_EXPIRATION:2592000000}
+
+mail:
+  from: ${MAIL_FROM:${MAIL_USERNAME:}}
+  from-name: ${MAIL_FROM_NAME:CampusOps}
+  debug-code-enabled: ${MAIL_DEBUG_CODE_ENABLED:false}
+
+app:
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
 
 server:
   port: 8080

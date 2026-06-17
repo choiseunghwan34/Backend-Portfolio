@@ -37,4 +37,8 @@ public class RedisKeys {
     public static String tokenBlacklist(String tokenHash) {
         return "auth:blacklist:" + tokenHash;
     }
+
+    public static String emailVerification(String email) {
+        return "auth:email:verify:" + email;
+    }
 }

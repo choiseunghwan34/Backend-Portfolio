@@ -4783,6 +4783,55 @@ select:focus-visible {
   justify-content: center;
 }
 
+.inline-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+}
+
+.inline-field .secondary-button {
+  min-width: 7.6rem;
+  border-color: #d6e4f2;
+  background: #f7fbff;
+  color: #123b63;
+  white-space: nowrap;
+}
+
+.email-verify-hint,
+.email-verify-box {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid #cfe3f7;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f6fbff 0%, #ffffff 100%);
+}
+
+.email-verify-hint strong,
+.email-verify-box strong {
+  color: #10233f;
+  font-size: 0.95rem;
+}
+
+.email-verify-hint span,
+.email-verify-box span {
+  color: #6b7a90;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.email-verify-hint a {
+  width: fit-content;
+  margin-top: 0.25rem;
+  color: #1f5f99;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.email-verify-card {
+  overflow: hidden;
+}
+
 .app-dialog {
   position: fixed;
   inset: 0;
@@ -5741,6 +5790,10 @@ select:focus-visible {
   }
 
   .demo-login__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-field {
     grid-template-columns: 1fr;
   }
 
