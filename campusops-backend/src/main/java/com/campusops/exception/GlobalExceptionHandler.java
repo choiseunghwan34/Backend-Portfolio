@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
     public ResponseEntity<ApiResponse<Void>> handleValidation(Exception ex) {
-        return ResponseEntity.badRequest().body(ApiResponse.fail("입력값을 확인해주세요."));
+        return ResponseEntity.badRequest().body(ApiResponse.fail("입력값을 확인해 주세요."));
     }
 
     @ExceptionHandler(Exception.class)

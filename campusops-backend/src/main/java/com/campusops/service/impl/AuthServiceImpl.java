@@ -49,6 +49,9 @@ public class AuthServiceImpl implements AuthService {
     @Value("${mail.from:}")
     private String mailFrom;
 
+    @Value("${spring.mail.username:}")
+    private String mailUsername;
+
     @Value("${mail.from-name:CampusOps}")
     private String mailFromName;
 
@@ -197,16 +200,27 @@ public class AuthServiceImpl implements AuthService {
         }
 
         try {
+            String sender = resolveSender();
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
-            helper.setFrom(mailFrom, mailFromName);
+            helper.setFrom(sender, mailFromName);
             helper.setTo(email);
             helper.setSubject("[CampusOps] 이메일 인증 요청");
             helper.setText(buildVerificationMailText(verificationUrl), false);
             mailSender.send(message);
         } catch (Exception exception) {
-            throw new BusinessException("인증 메일 발송에 실패했습니다.");
+            throw new BusinessException("인증 메일 발송에 실패했습니다. SMTP 계정과 앱 비밀번호를 확인해 주세요.", 500);
         }
+    }
+
+    private String resolveSender() {
+        if (mailFrom != null && !mailFrom.isBlank()) {
+            return mailFrom;
+        }
+        if (mailUsername != null && !mailUsername.isBlank()) {
+            return mailUsername;
+        }
+        throw new BusinessException("메일 발신자 설정이 필요합니다.", 500);
     }
 
     private String buildVerificationMailText(String verificationUrl) {
