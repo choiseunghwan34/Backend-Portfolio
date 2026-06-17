@@ -48,6 +48,7 @@ public class AuthServiceImpl implements AuthService {
         if (userDao.selectByEmail(request.getEmail()) != null) {
             throw new BusinessException("이미 존재하는 이메일입니다.");
         }
+
         UserVO user = new UserVO();
         user.setUserId(request.getUserId());
         user.setUserPw(passwordEncoder.encode(PasswordUtil.normalize(request.getUserPw())));
@@ -58,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserVO saved = userDao.selectByUserId(request.getUserId());
         String token = jwtUtil.generateToken(new TokenPrincipalDTO(saved.getUserNo(), saved.getUserId(), saved.getRole()), defaultExpirationMillis);
-        cacheActiveToken(saved, token);
+        cacheActiveToken(saved, token, defaultExpirationMillis);
         return new AuthResponseDTO(token, saved.getUserNo(), saved.getUserId(), saved.getUserName(), saved.getRole(), false);
     }
 
@@ -72,7 +73,7 @@ public class AuthServiceImpl implements AuthService {
         boolean duplicateLogin = invalidateActiveTokens(user.getUserNo());
         long expirationMillis = Boolean.TRUE.equals(request.getAutoLogin()) ? autoLoginExpirationMillis : defaultExpirationMillis;
         String token = jwtUtil.generateToken(new TokenPrincipalDTO(user.getUserNo(), user.getUserId(), user.getRole()), expirationMillis);
-        cacheActiveToken(user, token);
+        cacheActiveToken(user, token, expirationMillis);
         return new AuthResponseDTO(token, user.getUserNo(), user.getUserId(), user.getUserName(), user.getRole(), duplicateLogin);
     }
 
@@ -97,20 +98,19 @@ public class AuthServiceImpl implements AuthService {
         return user;
     }
 
-    private void cacheActiveToken(UserVO user, String token) {
-        long remainingMillis = jwtUtil.remainingMillis(token);
-        if (remainingMillis <= 0) {
+    private void cacheActiveToken(UserVO user, String token, long expirationMillis) {
+        if (expirationMillis <= 0) {
             return;
         }
         String tokenHash = jwtUtil.tokenHash(token);
-        long expiresAt = System.currentTimeMillis() + remainingMillis;
+        long expiresAt = System.currentTimeMillis() + expirationMillis;
         redisTemplate.opsForValue().set(
                 RedisKeys.activeToken(user.getUserNo(), tokenHash),
                 String.valueOf(expiresAt),
-                Duration.ofMillis(remainingMillis)
+                Duration.ofMillis(expirationMillis)
         );
         redisTemplate.opsForSet().add(RedisKeys.activeTokens(user.getUserNo()), tokenHash);
-        redisTemplate.expire(RedisKeys.activeTokens(user.getUserNo()), Duration.ofMillis(remainingMillis));
+        redisTemplate.expire(RedisKeys.activeTokens(user.getUserNo()), Duration.ofMillis(expirationMillis));
     }
 
     private boolean invalidateActiveTokens(Long userNo) {
@@ -120,35 +120,16 @@ public class AuthServiceImpl implements AuthService {
             return false;
         }
 
-        boolean invalidated = false;
-        long now = System.currentTimeMillis();
         for (Object tokenHashObject : tokenHashes) {
             String tokenHash = String.valueOf(tokenHashObject);
-            String activeTokenKey = RedisKeys.activeToken(userNo, tokenHash);
-            Object expiresAtValue = redisTemplate.opsForValue().get(activeTokenKey);
-            long remainingMillis = readRemainingMillis(expiresAtValue, now);
-            if (remainingMillis > 0) {
-                redisTemplate.opsForValue().set(
-                        RedisKeys.tokenBlacklist(tokenHash),
-                        RedisKeys.BLACKLIST_DUPLICATE_LOGIN,
-                        Duration.ofMillis(remainingMillis)
-                );
-                invalidated = true;
-            }
-            redisTemplate.delete(activeTokenKey);
+            redisTemplate.opsForValue().set(
+                    RedisKeys.tokenBlacklist(tokenHash),
+                    RedisKeys.BLACKLIST_DUPLICATE_LOGIN,
+                    Duration.ofMillis(autoLoginExpirationMillis)
+            );
+            redisTemplate.delete(RedisKeys.activeToken(userNo, tokenHash));
         }
         redisTemplate.delete(activeTokensKey);
-        return invalidated;
-    }
-
-    private long readRemainingMillis(Object expiresAtValue, long now) {
-        if (expiresAtValue == null) {
-            return 0;
-        }
-        try {
-            return Math.max(Long.parseLong(String.valueOf(expiresAtValue)) - now, 0);
-        } catch (NumberFormatException ignored) {
-            return 0;
-        }
+        return true;
     }
 }

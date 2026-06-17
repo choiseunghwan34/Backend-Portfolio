@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { roomApi } from '../api/roomApi';
+import { confirmDialog, notify } from '../utils/dialog.jsx';
 
 function statusClass(value = '') {
   return String(value).toLowerCase();
@@ -46,11 +47,11 @@ export default function RoomPage() {
 
     const selectedRoom = rooms.find((room) => String(room.roomNo) === String(form.roomNo));
     if (!selectedRoom) {
-      window.alert('예약할 공간을 선택해 주세요.');
+      await notify({ title: '공간 선택 필요', message: '예약할 공간을 선택해 주세요.', type: 'info' });
       return;
     }
     if (selectedRoom.status !== 'AVAILABLE') {
-      window.alert('운영 중지된 공간은 예약할 수 없습니다.');
+      await notify({ title: '예약할 수 없는 공간입니다', message: '운영 중지된 공간은 예약할 수 없습니다.', type: 'warning' });
       return;
     }
 
@@ -63,21 +64,30 @@ export default function RoomPage() {
       });
       setForm({ roomNo: '', reservationDate: '', startTime: '', endTime: '' });
       setMessage('예약이 완료되었습니다.');
+      await notify({ title: '예약 완료', message: `${selectedRoom.roomName} 예약이 접수되었습니다.`, type: 'success' });
       await load();
     } catch (error) {
-      window.alert(error?.response?.data?.message || '예약 신청에 실패했습니다.');
+      await notify({ title: '예약 실패', message: error?.response?.data?.message || '예약 신청에 실패했습니다.', type: 'danger' });
     } finally {
       setSubmitting(false);
     }
   };
 
   const cancelReservation = async (reservationNo) => {
-    if (!window.confirm('예약을 취소할까요?')) return;
+    const confirmed = await confirmDialog({
+      title: '예약을 취소할까요?',
+      message: '취소한 예약은 다시 복구할 수 없습니다.',
+      type: 'warning',
+      confirmText: '예약 취소',
+      cancelText: '돌아가기'
+    });
+    if (!confirmed) return;
     try {
       await roomApi.cancel(reservationNo);
+      await notify({ title: '예약 취소 완료', message: '예약이 취소되었습니다.', type: 'success' });
       await load();
     } catch (error) {
-      window.alert(error?.response?.data?.message || '예약 취소에 실패했습니다.');
+      await notify({ title: '취소 실패', message: error?.response?.data?.message || '예약 취소에 실패했습니다.', type: 'danger' });
     }
   };
 

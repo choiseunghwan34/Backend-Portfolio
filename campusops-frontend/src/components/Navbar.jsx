@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { clearSession, getCurrentUser, subscribeSession } from '../utils/auth';
+import { notify } from '../utils/dialog.jsx';
 
 export default function Navbar() {
   const [user, setUser] = useState(() => getCurrentUser());
+  const [loggingOut, setLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const displayName = user ? `${user.userName || user.userId}(${user.userId})` : '';
@@ -12,10 +14,13 @@ export default function Navbar() {
   useEffect(() => subscribeSession(() => setUser(getCurrentUser())), []);
 
   const logout = async () => {
+    setLoggingOut(true);
     try {
       await authApi.logout();
     } finally {
       clearSession();
+      setLoggingOut(false);
+      await notify({ title: '로그아웃되었습니다', message: '다음에 다시 만나요.', type: 'success' });
       navigate('/home');
     }
   };
@@ -50,9 +55,12 @@ export default function Navbar() {
             </Link>
             <span className={`navbar__user ${user.role === 'ADMIN' ? 'navbar__user--admin' : ''}`} title={displayName}>
               <span className="navbar__user-dot" />
-              {user.role === 'ADMIN' ? '관리자' : displayName}
+              {user.role === 'ADMIN' ? `관리자(${user.userId})` : displayName}
             </span>
-            <button className="text-button" type="button" onClick={logout}>로그아웃</button>
+            <button className="text-button navbar__logout" type="button" disabled={loggingOut} onClick={logout}>
+              {loggingOut ? <span className="button-spinner button-spinner--dark" /> : null}
+              {loggingOut ? '로그아웃 중...' : '로그아웃'}
+            </button>
           </>
         ) : (
           <>

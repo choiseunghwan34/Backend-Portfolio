@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { roomApi } from '../api/roomApi';
+import { confirmDialog, notify } from '../utils/dialog.jsx';
 
 const empty = { roomName: '', location: '', capacity: '' };
 
@@ -7,16 +8,13 @@ function statusClass(value = '') {
   return String(value).toLowerCase();
 }
 
-const roomStatusText = {
-  AVAILABLE: '예약 가능',
-  DISABLED: '운영 중지'
-};
+const roomStatusText = { AVAILABLE: '예약 가능', DISABLED: '운영 중지' };
+const reservationStatusText = { RESERVED: '예약됨', CANCELLED: '취소됨', COMPLETED: '이용 완료' };
 
-const reservationStatusText = {
-  RESERVED: '예약됨',
-  CANCELLED: '취소됨',
-  COMPLETED: '이용 완료'
-};
+function formatTime(value) {
+  if (!value) return '-';
+  return String(value).slice(0, 5);
+}
 
 export default function AdminRoomPage() {
   const [form, setForm] = useState(empty);
@@ -32,11 +30,12 @@ export default function AdminRoomPage() {
 
   useEffect(() => { load(); }, []);
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const submit = async (event) => {
+    event.preventDefault();
     const payload = { ...form, capacity: Number(form.capacity || 0) };
     if (editingId) await roomApi.update(editingId, payload);
     else await roomApi.create(payload);
+    await notify({ title: '저장 완료', message: '공간 정보가 저장되었습니다.', type: 'success' });
     setForm(empty);
     setEditingId(null);
     load();
@@ -44,16 +43,20 @@ export default function AdminRoomPage() {
 
   const startEdit = (room) => {
     setEditingId(room.roomNo);
-    setForm({
-      roomName: room.roomName,
-      location: room.location || '',
-      capacity: room.capacity || ''
-    });
+    setForm({ roomName: room.roomName, location: room.location || '', capacity: room.capacity || '' });
   };
 
   const disable = async (roomNo) => {
-    if (!window.confirm('이 공간을 비활성화할까요?')) return;
+    const confirmed = await confirmDialog({
+      title: '공간을 운영 중지할까요?',
+      message: '운영 중지된 공간은 사용자가 예약할 수 없습니다.',
+      type: 'warning',
+      confirmText: '운영 중지',
+      cancelText: '취소'
+    });
+    if (!confirmed) return;
     await roomApi.disable(roomNo);
+    await notify({ title: '운영 중지 완료', message: '공간 상태가 변경되었습니다.', type: 'success' });
     load();
   };
 
@@ -70,13 +73,11 @@ export default function AdminRoomPage() {
 
       <div className="workspace-grid two">
         <section className="workspace-card">
-          <div className="workspace-card__head">
-            <div><h2>{editingId ? '공간 수정' : '공간 등록'}</h2><p>예약 가능한 공간 정보를 관리합니다.</p></div>
-          </div>
+          <div className="workspace-card__head"><div><h2>{editingId ? '공간 수정' : '공간 등록'}</h2><p>예약 가능한 공간 정보를 관리합니다.</p></div></div>
           <form className="workspace-form" onSubmit={submit}>
-            <label>이름<input required value={form.roomName} onChange={(e) => setForm({ ...form, roomName: e.target.value })} /></label>
-            <label>위치<input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></label>
-            <label>수용 인원<input type="number" min="0" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} /></label>
+            <label>이름<input required value={form.roomName} onChange={(event) => setForm({ ...form, roomName: event.target.value })} /></label>
+            <label>위치<input value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} /></label>
+            <label>수용 인원<input type="number" min="0" value={form.capacity} onChange={(event) => setForm({ ...form, capacity: event.target.value })} /></label>
             <div className="workspace-actions">
               <button className="primary-button" type="submit">{editingId ? '수정 저장' : '등록'}</button>
               {editingId ? <button className="secondary-button" type="button" onClick={() => { setEditingId(null); setForm(empty); }}>취소</button> : null}
@@ -90,7 +91,7 @@ export default function AdminRoomPage() {
                 <div className="workspace-row__actions">
                   <span className={`status-pill ${statusClass(room.status)}`}>{roomStatusText[room.status] || room.status}</span>
                   <button className="secondary-button" type="button" onClick={() => startEdit(room)}>수정</button>
-                  <button className="secondary-button" type="button" disabled={room.status === 'DISABLED'} onClick={() => disable(room.roomNo)}>비활성화</button>
+                  <button className="secondary-button" type="button" disabled={room.status === 'DISABLED'} onClick={() => disable(room.roomNo)}>운영 중지</button>
                 </div>
               </div>
             ))}
@@ -99,15 +100,13 @@ export default function AdminRoomPage() {
         </section>
 
         <section className="workspace-card">
-          <div className="workspace-card__head">
-            <div><h2>예약 관리</h2><p>전체 예약 신청과 이용 일정을 확인합니다.</p></div>
-          </div>
+          <div className="workspace-card__head"><div><h2>예약 관리</h2><p>전체 예약 신청과 이용 일정을 확인합니다.</p></div></div>
           <div className="workspace-list">
             {reservations.map((reservation) => (
               <div className="workspace-row" key={reservation.reservationNo}>
                 <div className="workspace-row__main">
                   <strong>{reservation.roomName || `예약 #${reservation.reservationNo}`}</strong>
-                  <span>공간 #{reservation.roomNo} · {reservation.reservationDate} {reservation.startTime} - {reservation.endTime}</span>
+                  <span>{reservation.reservationDate} · {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}</span>
                 </div>
                 <span className={`status-pill ${statusClass(reservation.status)}`}>{reservationStatusText[reservation.status] || reservation.status || '예약됨'}</span>
               </div>

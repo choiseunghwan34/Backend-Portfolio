@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { clearSavedUserId, consumeAuthNotice, getSavedUserId, setSavedUserId, setSession } from '../utils/auth';
+import { notify } from '../utils/dialog.jsx';
 
 const demoAccounts = {
   user: { userId: 'user01', userPw: 'User123!' },
@@ -37,7 +38,11 @@ export default function LoginPage() {
       }
 
       if (result.duplicateLogin) {
-        window.alert('기존에 로그인되어 있던 다른 세션을 종료하고 새로 로그인했습니다.');
+        await notify({
+          title: '기존 세션을 정리했습니다',
+          message: '다른 곳에 로그인되어 있던 세션을 종료하고 새로 로그인했습니다.',
+          type: 'warning'
+        });
       }
 
       navigate(result.role === 'ADMIN' ? '/admin' : '/dashboard');
@@ -48,14 +53,14 @@ export default function LoginPage() {
     }
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (event) => {
+    event.preventDefault();
     await loginWith(form, 'form');
   };
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
+      <div className={`auth-card ${loadingType ? 'is-busy' : ''}`}>
         <div className="auth-card__brand">
           <img src="/campusops-mark.svg" alt="" />
           <span>CampusOps</span>
@@ -67,26 +72,27 @@ export default function LoginPage() {
         <form onSubmit={onSubmit} className="workspace-form">
           <label>
             아이디
-            <input value={form.userId} onChange={(e) => setForm({ ...form, userId: e.target.value })} />
+            <input value={form.userId} onChange={(event) => setForm({ ...form, userId: event.target.value })} />
           </label>
           <label>
             비밀번호
-            <input type="password" value={form.userPw} onChange={(e) => setForm({ ...form, userPw: e.target.value })} />
+            <input type="password" value={form.userPw} onChange={(event) => setForm({ ...form, userPw: event.target.value })} />
           </label>
 
           <div className="auth-options">
             <label>
-              <input type="checkbox" checked={options.rememberId} onChange={(e) => setOptions({ ...options, rememberId: e.target.checked })} />
+              <input type="checkbox" checked={options.rememberId} onChange={(event) => setOptions({ ...options, rememberId: event.target.checked })} />
               <span>아이디 저장</span>
             </label>
             <label>
-              <input type="checkbox" checked={options.autoLogin} onChange={(e) => setOptions({ ...options, autoLogin: e.target.checked })} />
+              <input type="checkbox" checked={options.autoLogin} onChange={(event) => setOptions({ ...options, autoLogin: event.target.checked })} />
               <span>자동 로그인</span>
             </label>
           </div>
 
           {error ? <div className="form-error">{error}</div> : null}
           <button className="primary-button" type="submit" disabled={Boolean(loadingType)}>
+            {loadingType === 'form' ? <span className="button-spinner" /> : null}
             {loadingType === 'form' ? '로그인 중...' : '로그인'}
           </button>
         </form>
@@ -98,9 +104,11 @@ export default function LoginPage() {
           </div>
           <div className="demo-login__grid">
             <button type="button" className="secondary-button" disabled={Boolean(loadingType)} onClick={() => loginWith(demoAccounts.user, 'user')}>
+              {loadingType === 'user' ? <span className="button-spinner" /> : null}
               {loadingType === 'user' ? '로그인 중...' : '일반회원 로그인'}
             </button>
             <button type="button" className="secondary-button" disabled={Boolean(loadingType)} onClick={() => loginWith(demoAccounts.admin, 'admin')}>
+              {loadingType === 'admin' ? <span className="button-spinner" /> : null}
               {loadingType === 'admin' ? '로그인 중...' : '관리자계정 로그인'}
             </button>
           </div>
