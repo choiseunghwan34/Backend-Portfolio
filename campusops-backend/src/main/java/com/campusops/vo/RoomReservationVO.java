@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 public class RoomReservationVO {
     private Long reservationNo;
     private Long roomNo;
+    private String roomName;
+    private String location;
     private Long userNo;
     private LocalDate reservationDate;
     private LocalTime startTime;

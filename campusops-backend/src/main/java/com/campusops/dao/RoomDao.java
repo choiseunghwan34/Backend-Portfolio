@@ -20,6 +20,7 @@ public interface RoomDao {
     List<RoomReservationVO> selectAllReservations();
     int insertReservation(RoomReservationVO reservationVO);
     int cancelReservation(@Param("reservationNo") Long reservationNo);
+    int completeExpiredReservations();
     int countTodayReservations();
     int existsReservation(@Param("roomNo") Long roomNo,
                           @Param("reservationDate") java.time.LocalDate reservationDate,

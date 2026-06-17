@@ -164,7 +164,7 @@ export default function HomePage() {
   }, []);
 
   const derived = useMemo(() => {
-    const todayReservations = home.reservations.filter((item) => isToday(item.reservationDate)).length;
+    const todayReservations = home.reservations.filter((item) => isToday(item.reservationDate) && item.status === 'RESERVED').length;
     const pendingReports = home.reports.filter((item) => ['RECEIVED', 'CHECKING'].includes(item.status)).length;
     const requestedRentals = home.rentals.filter((item) => item.rentalStatus === 'REQUESTED').length;
     const availableAssets = home.assets.filter((item) => item.status === 'AVAILABLE').length;

@@ -26,6 +26,7 @@ public class AdminDashboardController {
 
     @GetMapping("/stats")
     public ApiResponse<?> stats() {
+        roomDao.completeExpiredReservations();
         Map<String, Object> data = new HashMap<>();
         data.put("totalUsers", userDao.countUsers());
         data.put("pendingReports", reportDao.countByStatus("RECEIVED") + reportDao.countByStatus("CHECKING"));

@@ -8,7 +8,8 @@
     </sql>
 
     <sql id="reservationColumns">
-        reservation_no, room_no, user_no, reservation_date, start_time, end_time, status, created_at
+        rr.reservation_no, rr.room_no, r.room_name, r.location, rr.user_no,
+        rr.reservation_date, rr.start_time, rr.end_time, rr.status, rr.created_at
     </sql>
 
     <select id="selectRooms" resultType="com.campusops.vo.RoomVO">
@@ -44,22 +45,25 @@
 
     <select id="selectReservationsByRoom" resultType="com.campusops.vo.RoomReservationVO">
         SELECT <include refid="reservationColumns" />
-        FROM room_reservation
-        WHERE room_no = #{roomNo}
-        ORDER BY reservation_date DESC, start_time DESC
+        FROM room_reservation rr
+        JOIN room r ON rr.room_no = r.room_no
+        WHERE rr.room_no = #{roomNo}
+        ORDER BY rr.reservation_date DESC, rr.start_time DESC
     </select>
 
     <select id="selectMyReservations" resultType="com.campusops.vo.RoomReservationVO">
         SELECT <include refid="reservationColumns" />
-        FROM room_reservation
-        WHERE user_no = #{userNo}
-        ORDER BY reservation_date DESC, start_time DESC
+        FROM room_reservation rr
+        JOIN room r ON rr.room_no = r.room_no
+        WHERE rr.user_no = #{userNo}
+        ORDER BY rr.reservation_date DESC, rr.start_time DESC
     </select>
 
     <select id="selectAllReservations" resultType="com.campusops.vo.RoomReservationVO">
         SELECT <include refid="reservationColumns" />
-        FROM room_reservation
-        ORDER BY reservation_date DESC, start_time DESC
+        FROM room_reservation rr
+        JOIN room r ON rr.room_no = r.room_no
+        ORDER BY rr.reservation_date DESC, rr.start_time DESC
     </select>
 
     <insert id="insertReservation" parameterType="com.campusops.vo.RoomReservationVO" useGeneratedKeys="true" keyProperty="reservationNo" keyColumn="reservation_no">
@@ -71,12 +75,24 @@
         UPDATE room_reservation
         SET status = 'CANCELLED'
         WHERE reservation_no = #{reservationNo}
+          AND status = 'RESERVED'
+    </update>
+
+    <update id="completeExpiredReservations">
+        UPDATE room_reservation
+        SET status = 'COMPLETED'
+        WHERE status = 'RESERVED'
+          AND (
+              reservation_date &lt; CURRENT_DATE
+              OR (reservation_date = CURRENT_DATE AND end_time &lt; CURRENT_TIME)
+          )
     </update>
 
     <select id="countTodayReservations" resultType="int">
         SELECT COUNT(*)
         FROM room_reservation
         WHERE reservation_date = CURRENT_DATE
+          AND status = 'RESERVED'
     </select>
 
     <select id="existsReservation" resultType="int">

@@ -4756,6 +4756,16 @@ select:focus-visible {
   margin-bottom: 1rem;
 }
 
+.service-row.is-disabled {
+  background: #f8fafc;
+  opacity: 0.68;
+}
+
+.service-row.is-disabled:hover {
+  transform: none;
+  background: #f8fafc;
+}
+
 .qna-page {
   display: grid;
   gap: 1.15rem;
