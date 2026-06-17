@@ -1,6 +1,9 @@
 package com.campusops.util;
 
 public class RedisKeys {
+    public static final String BLACKLIST_LOGOUT = "LOGOUT";
+    public static final String BLACKLIST_DUPLICATE_LOGIN = "DUPLICATE_LOGIN";
+
     private RedisKeys() {
     }
 
@@ -26,6 +29,10 @@ public class RedisKeys {
 
     public static String activeToken(Long userNo, String tokenHash) {
         return "auth:token:" + userNo + ":" + tokenHash;
+    }
+
+    public static String activeTokens(Long userNo) {
+        return "auth:tokens:" + userNo;
     }
 
     public static String tokenBlacklist(String tokenHash) {

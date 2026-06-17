@@ -13,4 +13,5 @@ public class AuthRequestDTO {
     private String userName;
     @Email
     private String email;
+    private Boolean autoLogin;
 }

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { clearSession, getToken } from '../utils/auth';
+import { clearSession, getToken, setAuthNotice } from '../utils/auth';
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
@@ -20,8 +20,13 @@ client.interceptors.response.use(
       if (error?.config?.skipAuth) {
         return Promise.reject(error);
       }
+      const message = error?.response?.data?.message || '세션이 종료되었습니다. 다시 로그인해 주세요.';
       clearSession();
-      window.location.href = '/login';
+      setAuthNotice(message);
+      if (!window.location.pathname.startsWith('/login')) {
+        window.alert(message);
+        window.location.href = '/login';
+      }
       return Promise.reject(error);
     }
     return Promise.reject(error);

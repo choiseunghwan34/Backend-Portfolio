@@ -37,8 +37,12 @@ public class JwtUtil {
     }
 
     public String generateToken(TokenPrincipalDTO principal) {
+        return generateToken(principal, expiration);
+    }
+
+    public String generateToken(TokenPrincipalDTO principal, long expirationMillis) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + expiration);
+        Date expiry = new Date(now.getTime() + expirationMillis);
         return Jwts.builder()
                 .subject(String.valueOf(principal.getUserNo()))
                 .claim("userId", principal.getUserId())

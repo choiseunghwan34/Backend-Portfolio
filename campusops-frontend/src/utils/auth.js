@@ -2,6 +2,7 @@ const TOKEN_KEY = 'campusops_token';
 const USER_KEY = 'campusops_user';
 const REMEMBER_ID_KEY = 'campusops_remember_id';
 const AUTO_LOGIN_KEY = 'campusops_auto_login';
+const AUTH_NOTICE_KEY = 'campusops_auth_notice';
 const SESSION_EVENT = 'campusops_session_change';
 
 function readJson(storage, key) {
@@ -63,6 +64,18 @@ export function clearSavedUserId() {
 
 export function isAutoLoginEnabled() {
   return localStorage.getItem(AUTO_LOGIN_KEY) === 'Y';
+}
+
+export function setAuthNotice(message) {
+  if (message) {
+    sessionStorage.setItem(AUTH_NOTICE_KEY, message);
+  }
+}
+
+export function consumeAuthNotice() {
+  const message = sessionStorage.getItem(AUTH_NOTICE_KEY) || '';
+  sessionStorage.removeItem(AUTH_NOTICE_KEY);
+  return message;
 }
 
 export function subscribeSession(listener) {

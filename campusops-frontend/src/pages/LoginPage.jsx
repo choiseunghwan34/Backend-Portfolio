@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
-import { clearSavedUserId, getSavedUserId, setSavedUserId, setSession } from '../utils/auth';
+import { clearSavedUserId, consumeAuthNotice, getSavedUserId, setSavedUserId, setSession } from '../utils/auth';
 
 const demoAccounts = {
   user: { userId: 'user01', userPw: 'User123!' },
@@ -12,7 +12,7 @@ export default function LoginPage() {
   const savedUserId = getSavedUserId();
   const [form, setForm] = useState({ userId: savedUserId, userPw: '' });
   const [options, setOptions] = useState({ rememberId: Boolean(savedUserId), autoLogin: true });
-  const [error, setError] = useState('');
+  const [error, setError] = useState(() => consumeAuthNotice());
   const [loadingType, setLoadingType] = useState('');
   const navigate = useNavigate();
 
@@ -20,18 +20,27 @@ export default function LoginPage() {
     setError('');
     setLoadingType(type);
     try {
-      const { data } = await authApi.login(payload);
+      const loginPayload = { ...payload, autoLogin: options.autoLogin };
+      const { data } = await authApi.login(loginPayload);
+      const result = data.data;
+
       setSession({
-        token: data.data.token,
-        user: { userNo: data.data.userNo, userId: data.data.userId, userName: data.data.userName, role: data.data.role },
+        token: result.token,
+        user: { userNo: result.userNo, userId: result.userId, userName: result.userName, role: result.role },
         autoLogin: options.autoLogin
       });
+
       if (options.rememberId) {
-        setSavedUserId(payload.userId);
+        setSavedUserId(loginPayload.userId);
       } else {
         clearSavedUserId();
       }
-      navigate(data.data.role === 'ADMIN' ? '/admin' : '/dashboard');
+
+      if (result.duplicateLogin) {
+        window.alert('기존에 로그인되어 있던 다른 세션을 종료하고 새로 로그인했습니다.');
+      }
+
+      navigate(result.role === 'ADMIN' ? '/admin' : '/dashboard');
     } catch (err) {
       setError(err?.response?.data?.message || '로그인에 실패했습니다.');
     } finally {
