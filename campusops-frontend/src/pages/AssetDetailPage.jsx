@@ -64,16 +64,16 @@ export default function AssetDetailPage() {
               <div>
                 <span className="workspace-label">RENTAL REQUEST</span>
                 <h3>{canRent ? '지금 대여 신청이 가능합니다' : '현재는 대여 신청이 어렵습니다'}</h3>
-                <p>{canRent ? '신청 후 관리자의 승인을 받으면 대여가 확정됩니다.' : '관리자 확인 후 상태가 변경되면 다시 신청할 수 있습니다.'}</p>
+                <p>{canRent ? '신청 후 관리자 승인을 받으면 대여가 확정됩니다.' : '관리자 확인 후 상태가 변경되면 다시 신청할 수 있습니다.'}</p>
               </div>
-              <button className="primary-button" disabled={!canRent} onClick={rent}>대여 신청</button>
+              <button className="primary-button" type="button" disabled={!canRent} onClick={rent}>대여 신청</button>
             </div>
           </section>
           <aside className="detail-side">
             <div className="detail-side__summary">
               <span>대여 상태</span>
               <strong>{statusText}</strong>
-              <p>{canRent ? '예약 충돌 없이 바로 신청할 수 있는 기자재입니다.' : '현재 대여 또는 비활성 상태입니다.'}</p>
+              <p>{canRent ? '예약 충돌 없이 바로 신청할 수 있는 기자재입니다.' : '현재 대여중 또는 비활성 상태입니다.'}</p>
             </div>
             <div><span>관리 번호</span><strong>#{asset.assetNo}</strong></div>
             <div><span>분류</span><strong>{asset.category || '기자재'}</strong></div>

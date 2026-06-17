@@ -24,7 +24,7 @@ export default function NotificationPage() {
         <div>
           <span className="workspace-label">NOTIFICATION CENTER</span>
           <h1>알림센터</h1>
-          <p>신고 처리, 대여 승인, 예약 변경 등 CampusOps의 업무 처리 결과를 확인합니다.</p>
+          <p>신고 처리, 대여 승인, 예약 변경 등 CampusOps 업무 처리 결과를 확인합니다.</p>
         </div>
         <dl>
           <div><dt>전체 알림</dt><dd>{notifications.length}건</dd></div>
@@ -47,7 +47,9 @@ export default function NotificationPage() {
                 <strong>{notification.title}</strong>
                 <span>{notification.content} · {String(notification.createdAt || '').slice(0, 10)}</span>
               </div>
-              {!notification.readYn ? <button className="secondary-button" onClick={() => markRead(notification.notificationNo)}>읽음 처리</button> : <span className="status-pill completed">읽음</span>}
+              {!notification.readYn
+                ? <button className="secondary-button" type="button" onClick={() => markRead(notification.notificationNo)}>읽음 처리</button>
+                : <span className="status-pill completed">읽음</span>}
             </div>
           ))}
           {!notifications.length ? <div className="workspace-empty">도착한 알림이 없습니다.</div> : null}

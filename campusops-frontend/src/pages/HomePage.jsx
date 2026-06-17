@@ -1,20 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { assetApi } from '../api/assetApi';
+import { noticeApi } from '../api/noticeApi';
+import { notificationApi } from '../api/notificationApi';
+import { reportApi } from '../api/reportApi';
+import { roomApi } from '../api/roomApi';
+import { getCurrentUser } from '../utils/auth';
 
 const quickServices = [
   { no: '01', title: '강의실 예약', description: '오늘 가능한 강의실 확인', to: '/rooms' },
   { no: '02', title: '기자재 대여', description: '대여 가능 기자재 확인', to: '/assets' },
   { no: '03', title: '시설 신고', description: '고장 접수와 처리 상태 확인', to: '/reports' },
-  { no: '04', title: '공간 예약', description: '회의실·세미나실 예약하기', to: '/rooms' },
+  { no: '04', title: '공간 예약', description: '회의실과 세미나실 예약하기', to: '/rooms' },
   { no: '05', title: '알림센터', description: '내 알림과 처리 결과 확인', to: '/notifications' },
   { no: '06', title: 'Q&A', description: '자주 묻는 질문과 이용 문의', to: '/login' }
-];
-
-const heroStats = [
-  { icon: 'calendar', label: '오늘 예약', value: '24건' },
-  { icon: 'report', label: '처리중 신고', value: '9건' },
-  { icon: 'check', label: '승인 대기', value: '7건' },
-  { icon: 'bell', label: '알림', value: '3건' }
 ];
 
 const actionLinks = [
@@ -26,13 +25,6 @@ const actionLinks = [
   { icon: 'chat', label: '문의하기', to: '/login' }
 ];
 
-const notices = [
-  { category: '중요', title: '2026학년도 2학기 강의실 운영 일정 안내', date: '2026.06.11', important: true },
-  { category: '대여', title: '기자재 대여 신청 가능 시간 변경 안내', date: '2026.06.10' },
-  { category: '예약', title: '공간 예약 가능 구역 업데이트', date: '2026.06.09' },
-  { category: '시설', title: '시설 신고 처리 절차 및 응답 기준 안내', date: '2026.06.08' }
-];
-
 const guides = [
   '신고는 장소와 증상을 함께 입력해 주세요',
   '대여 신청 가능 시간과 수령 절차 안내',
@@ -40,42 +32,66 @@ const guides = [
   '알림센터에서 처리 결과를 확인하는 방법'
 ];
 
-const operations = [
-  { label: '오늘 예약', description: '예정 24 · 이용중 18', value: 24, width: 72 },
-  { label: '처리중 신고', description: '접수 9 · 처리 4', value: 9, width: 45 },
-  { label: '승인 대기', description: '기자재 대여 요청', value: 7, width: 31 },
-  { label: '완료된 알림', description: '오늘 새로 도착', value: 3, width: 18 }
-];
+const reportStatusText = {
+  RECEIVED: '접수',
+  CHECKING: '확인중',
+  COMPLETED: '완료',
+  REJECTED: '반려'
+};
 
-const workTabs = [
-  {
-    id: 'reports',
-    label: '시설 신고',
-    items: [
-      { icon: 'report', title: '본관 3층 복도 조명 점검 요청', meta: '김민지 · 10분 전', status: '접수', tone: 'waiting' },
-      { icon: 'tool', title: '스터디룸 냉방기 작동 이상', meta: '이도현 · 42분 전', status: '확인중', tone: 'checking' },
-      { icon: 'report', title: '강의동 1층 출입문 수리 요청', meta: '박서준 · 1시간 전', status: '완료', tone: 'done' }
-    ]
-  },
-  {
-    id: 'rentals',
-    label: '대여 신청',
-    items: [
-      { icon: 'box', title: '노트북 3대 대여 신청', meta: '컴퓨터공학과 · 15분 전', status: '접수', tone: 'waiting' },
-      { icon: 'box', title: '빔프로젝터 대여 신청', meta: '경영학과 · 50분 전', status: '확인중', tone: 'checking' },
-      { icon: 'box', title: '무선 마이크 2대 대여 신청', meta: '학생회 · 2시간 전', status: '반려', tone: 'rejected' }
-    ]
-  },
-  {
-    id: 'rooms',
-    label: '공간 예약',
-    items: [
-      { icon: 'calendar', title: '회의실 A · 14:00 - 15:00', meta: '교무팀 · 8분 전', status: '완료', tone: 'done' },
-      { icon: 'calendar', title: '스터디룸 2 · 16:00 - 18:00', meta: '김민지 · 35분 전', status: '확인중', tone: 'checking' },
-      { icon: 'calendar', title: '강의실 301 · 18:00 - 20:00', meta: '학술동아리 · 2시간 전', status: '반려', tone: 'rejected' }
-    ]
-  }
-];
+const rentalStatusText = {
+  REQUESTED: '접수',
+  APPROVED: '승인',
+  REJECTED: '반려',
+  RETURNED: '반납',
+  OVERDUE: '연체'
+};
+
+const reservationStatusText = {
+  RESERVED: '예약',
+  CANCELLED: '취소',
+  COMPLETED: '완료'
+};
+
+const toneByStatus = {
+  RECEIVED: 'waiting',
+  REQUESTED: 'waiting',
+  RESERVED: 'checking',
+  CHECKING: 'checking',
+  APPROVED: 'checking',
+  COMPLETED: 'done',
+  RETURNED: 'done',
+  REJECTED: 'rejected',
+  CANCELLED: 'rejected',
+  OVERDUE: 'rejected'
+};
+
+function unwrap(response, fallback = []) {
+  return response?.value?.data?.data ?? fallback;
+}
+
+function toArray(value) {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.items)) return value.items;
+  if (Array.isArray(value?.list)) return value.list;
+  if (Array.isArray(value?.content)) return value.content;
+  return [];
+}
+
+function formatDate(value) {
+  if (!value) return '-';
+  return String(value).slice(0, 10).replaceAll('-', '.');
+}
+
+function isToday(value) {
+  if (!value) return false;
+  return String(value).slice(0, 10) === new Date().toISOString().slice(0, 10);
+}
+
+function progressWidth(value, max) {
+  if (!max) return 12;
+  return Math.min(100, Math.max(12, Math.round((value / max) * 100)));
+}
 
 function LineIcon({ name }) {
   const icons = {
@@ -96,7 +112,133 @@ function LineIcon({ name }) {
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState('reports');
-  const activeWork = workTabs.find((tab) => tab.id === activeTab);
+  const [home, setHome] = useState({
+    notices: [],
+    assets: [],
+    rooms: [],
+    reports: [],
+    rentals: [],
+    reservations: [],
+    unreadCount: 0,
+    loading: true,
+    error: ''
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    const currentUser = getCurrentUser();
+
+    async function loadHomeData() {
+      const [noticeRes, assetRes, roomRes] = await Promise.allSettled([
+        noticeApi.list({ page: 1, size: 4 }, { skipAuth: true }),
+        assetApi.list({ skipAuth: true }),
+        roomApi.list({ skipAuth: true })
+      ]);
+
+      const privateResults = currentUser
+        ? await Promise.allSettled([
+            reportApi.my(),
+            assetApi.myRentals(),
+            roomApi.myReservations(),
+            notificationApi.unreadCount()
+          ])
+        : [];
+
+      if (!mounted) return;
+
+      const noticePayload = unwrap(noticeRes);
+      const assets = toArray(unwrap(assetRes));
+      const rooms = toArray(unwrap(roomRes));
+      const reports = toArray(unwrap(privateResults[0]));
+      const rentals = toArray(unwrap(privateResults[1]));
+      const reservations = toArray(unwrap(privateResults[2]));
+      const unreadPayload = unwrap(privateResults[3], 0);
+
+      setHome({
+        notices: toArray(noticePayload),
+        assets,
+        rooms,
+        reports,
+        rentals,
+        reservations,
+        unreadCount: Number(unreadPayload?.count ?? unreadPayload ?? 0),
+        loading: false,
+        error: [noticeRes, assetRes, roomRes, ...privateResults].some((result) => result.status === 'rejected')
+          ? '일부 운영 데이터를 불러오지 못했습니다.'
+          : ''
+      });
+    }
+
+    loadHomeData().catch(() => {
+      if (!mounted) return;
+      setHome((prev) => ({ ...prev, loading: false, error: '운영 데이터를 불러오지 못했습니다.' }));
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const derived = useMemo(() => {
+    const todayReservations = home.reservations.filter((item) => isToday(item.reservationDate)).length;
+    const pendingReports = home.reports.filter((item) => ['RECEIVED', 'CHECKING'].includes(item.status)).length;
+    const requestedRentals = home.rentals.filter((item) => item.rentalStatus === 'REQUESTED').length;
+    const availableAssets = home.assets.filter((item) => item.status === 'AVAILABLE').length;
+    const availableRooms = home.rooms.filter((item) => item.status !== 'DISABLED').length;
+    const maxOperation = Math.max(todayReservations, pendingReports, requestedRentals, home.unreadCount, 1);
+
+    return {
+      heroStats: [
+        { icon: 'calendar', label: '오늘 예약', value: `${todayReservations}건` },
+        { icon: 'report', label: '처리중 신고', value: `${pendingReports}건` },
+        { icon: 'check', label: '승인 대기', value: `${requestedRentals}건` },
+        { icon: 'bell', label: '알림', value: `${home.unreadCount}건` }
+      ],
+      operations: [
+        { label: '오늘 예약', description: `예약 가능 공간 ${availableRooms}곳`, value: todayReservations, width: progressWidth(todayReservations, maxOperation) },
+        { label: '처리중 신고', description: `내 신고 ${home.reports.length}건`, value: pendingReports, width: progressWidth(pendingReports, maxOperation) },
+        { label: '승인 대기', description: `대여 가능 기자재 ${availableAssets}개`, value: requestedRentals, width: progressWidth(requestedRentals, maxOperation) },
+        { label: '읽지 않은 알림', description: '확인 필요한 알림', value: home.unreadCount, width: progressWidth(home.unreadCount, maxOperation) }
+      ],
+      workTabs: [
+        {
+          id: 'reports',
+          label: '시설 신고',
+          items: home.reports.slice(0, 3).map((item) => ({
+            icon: 'report',
+            title: item.title,
+            meta: `${item.place || '시설'} · ${formatDate(item.createdAt)}`,
+            status: reportStatusText[item.status] || item.status,
+            tone: toneByStatus[item.status] || 'waiting'
+          }))
+        },
+        {
+          id: 'rentals',
+          label: '대여 신청',
+          items: home.rentals.slice(0, 3).map((item) => ({
+            icon: 'box',
+            title: item.assetName || `기자재 #${item.assetNo}`,
+            meta: `반납 예정 · ${formatDate(item.returnDueDate || item.createdAt)}`,
+            status: rentalStatusText[item.rentalStatus] || item.rentalStatus,
+            tone: toneByStatus[item.rentalStatus] || 'waiting'
+          }))
+        },
+        {
+          id: 'rooms',
+          label: '공간 예약',
+          items: home.reservations.slice(0, 3).map((item) => ({
+            icon: 'calendar',
+            title: `${item.roomName || `공간 #${item.roomNo}`} · ${item.startTime || '-'} - ${item.endTime || '-'}`,
+            meta: formatDate(item.reservationDate),
+            status: reservationStatusText[item.status] || item.status,
+            tone: toneByStatus[item.status] || 'checking'
+          }))
+        }
+      ]
+    };
+  }, [home]);
+
+  const activeWork = derived.workTabs.find((tab) => tab.id === activeTab) || derived.workTabs[0];
 
   return (
     <div className="reference-home">
@@ -106,7 +248,7 @@ export default function HomePage() {
             <div className="reference-hero__copy">
               <span>DYNAMIC CAMPUS OPERATIONS</span>
               <h1>도전과 창조의<br />운영 포털</h1>
-              <p>통합형 업무 · 예약형 업무 · 공간형 업무를 한 화면에서 연결하는<br />스마트한 캠퍼스 운영 플랫폼입니다.</p>
+              <p>통합형 업무 · 예약형 업무 · 공지형 업무를 한 화면에서 연결하는<br />스마트한 캠퍼스 운영 플랫폼입니다.</p>
               <div className="reference-hero__buttons">
                 <Link to="/login" className="reference-button reference-button--light">로그인 <span>→</span></Link>
                 <Link to="/signup" className="reference-button reference-button--ghost">회원가입 <span>→</span></Link>
@@ -114,10 +256,10 @@ export default function HomePage() {
             </div>
 
             <div className="reference-stats">
-              {heroStats.map((stat) => (
+              {derived.heroStats.map((stat) => (
                 <div className="reference-stat" key={stat.label}>
                   <span className="reference-stat__icon"><LineIcon name={stat.icon} /></span>
-                  <div><small>{stat.label}</small><strong>{stat.value}</strong></div>
+                  <div><small>{stat.label}</small><strong>{home.loading ? '-' : stat.value}</strong></div>
                 </div>
               ))}
             </div>
@@ -150,6 +292,8 @@ export default function HomePage() {
         </nav>
       </section>
 
+      {home.error && <p className="reference-data-note">{home.error}</p>}
+
       <section className="reference-dashboard">
         <article className="reference-card reference-notices">
           <header className="reference-card__head">
@@ -157,13 +301,13 @@ export default function HomePage() {
             <Link to="/notices">전체보기 <span>›</span></Link>
           </header>
           <div className="reference-list">
-            {notices.map((notice) => (
-              <Link to="/notices" className="reference-list__row" key={notice.title}>
-                <span className={notice.important ? 'important' : ''}>{notice.category}</span>
+            {home.notices.length > 0 ? home.notices.map((notice) => (
+              <Link to={`/notices/${notice.noticeNo}`} className="reference-list__row" key={notice.noticeNo}>
+                <span className={notice.importantYn ? 'important' : ''}>{notice.importantYn ? '중요' : notice.category || '공지'}</span>
                 <strong>{notice.title}</strong>
-                <time>{notice.date}</time>
+                <time>{formatDate(notice.createdAt)}</time>
               </Link>
-            ))}
+            )) : <div className="reference-empty">등록된 공지사항이 없습니다.</div>}
           </div>
         </article>
 
@@ -185,10 +329,10 @@ export default function HomePage() {
             <span><i />실시간 업데이트</span>
           </header>
           <div className="reference-operation__list">
-            {operations.map((item) => (
+            {derived.operations.map((item) => (
               <div key={item.label}>
                 <div><strong>{item.label}</strong><small>{item.description}</small></div>
-                <b>{item.value}<small>건</small></b>
+                <b>{home.loading ? '-' : item.value}<small>건</small></b>
                 <span><i style={{ width: `${item.width}%` }} /></span>
               </div>
             ))}
@@ -199,7 +343,7 @@ export default function HomePage() {
           <header className="reference-card__head reference-work__head">
             <h2>최근 업무 현황</h2>
             <div className="reference-tabs" role="tablist" aria-label="최근 업무 종류">
-              {workTabs.map((tab) => (
+              {derived.workTabs.map((tab) => (
                 <button
                   type="button"
                   role="tab"
@@ -214,13 +358,13 @@ export default function HomePage() {
             </div>
           </header>
           <div className="reference-work__list">
-            {activeWork.items.map((item) => (
-              <div className="reference-work__row" key={item.title}>
+            {activeWork.items.length > 0 ? activeWork.items.map((item) => (
+              <div className="reference-work__row" key={`${item.title}-${item.meta}`}>
                 <span><LineIcon name={item.icon} /></span>
                 <div><strong>{item.title}</strong><small>{item.meta}</small></div>
                 <b className={`ops-status ops-status--${item.tone}`}>{item.status}</b>
               </div>
-            ))}
+            )) : <div className="reference-empty">로그인 후 내 업무 현황을 확인할 수 있습니다.</div>}
           </div>
         </article>
 

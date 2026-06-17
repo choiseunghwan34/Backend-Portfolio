@@ -1,9 +1,9 @@
 import client from './client';
 
 export const roomApi = {
-  list: () => client.get('/api/rooms'),
-  detail: (roomNo) => client.get(`/api/rooms/${roomNo}`),
-  reservations: (roomNo) => client.get(`/api/rooms/${roomNo}/reservations`),
+  list: (config = {}) => client.get('/api/rooms', config),
+  detail: (roomNo, config = {}) => client.get(`/api/rooms/${roomNo}`, config),
+  reservations: (roomNo, config = {}) => client.get(`/api/rooms/${roomNo}/reservations`, config),
   reserve: (roomNo, payload) => client.post(`/api/rooms/${roomNo}/reservations`, payload),
   myReservations: () => client.get('/api/reservations/my'),
   cancel: (reservationNo) => client.delete(`/api/reservations/${reservationNo}`),

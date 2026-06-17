@@ -3,8 +3,12 @@
   <component name="ChangeListManager">
     <list default="true" id="58c16381-e8e3-4a32-aebd-9daee9b5f39e" name="변경" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/campusops-backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/campusops-backend/src/main/resources/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/campusops-backend/src/main/resources/mapper/RoomDao.xml" beforeDir="false" afterPath="$PROJECT_DIR$/campusops-backend/src/main/resources/mapper/RoomDao.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/campusops-backend/src/main/java/com/campusops/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/campusops-backend/src/main/java/com/campusops/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/campusops-frontend/src/api/client.js" beforeDir="false" afterPath="$PROJECT_DIR$/campusops-frontend/src/api/client.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/campusops-frontend/src/pages/HomePage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/campusops-frontend/src/pages/HomePage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/campusops-frontend/src/styles/global.css" beforeDir="false" afterPath="$PROJECT_DIR$/campusops-frontend/src/styles/global.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/campusops-frontend/src/utils/mockApi.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/campusops-frontend/src/utils/mockDb.js" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,7 +51,7 @@
       <updated>1781164600509</updated>
       <workItem from="1781164601442" duration="1116000" />
       <workItem from="1781569503019" duration="19000" />
-      <workItem from="1781577075083" duration="714000" />
+      <workItem from="1781577075083" duration="797000" />
     </task>
     <servers />
   </component>

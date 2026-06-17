@@ -43,7 +43,7 @@ export default function AssetPage() {
         <div>
           <span className="workspace-label">ASSET RENTAL</span>
           <h1>기자재 대여</h1>
-          <p>수업, 행사, 세미나 운영에 필요한 기자재를 확인하고 대여를 신청하세요.</p>
+          <p>수업, 행사, 동아리 운영에 필요한 기자재를 확인하고 대여를 신청하세요.</p>
         </div>
         <dl>
           <div><dt>대여 가능</dt><dd>{assets.filter((a) => a.status === 'AVAILABLE').length}개</dd></div>
@@ -53,7 +53,7 @@ export default function AssetPage() {
 
       <section className="service-guide">
         <strong>대여 이용 안내</strong>
-        <p>대여 신청 후 관리자의 승인 상태를 확인해 주세요. 기본 대여 기간은 7일이며, 반납 처리는 관리자 확인 후 반영됩니다.</p>
+        <p>대여 신청 후 관리자 승인 상태를 확인해 주세요. 기본 대여 기간은 7일이며, 반납 처리는 관리자 확인 후 반영됩니다.</p>
       </section>
 
       <div className="service-layout">
@@ -68,10 +68,11 @@ export default function AssetPage() {
                 </Link>
                 <div className="service-row__actions">
                   <span className={`status-pill ${statusClass(asset.status)}`}>{assetStatusText[asset.status] || asset.status}</span>
-                  <button className="secondary-button" disabled={asset.status !== 'AVAILABLE'} onClick={() => rent(asset.assetNo)}>대여 신청</button>
+                  <button className="secondary-button" type="button" disabled={asset.status !== 'AVAILABLE'} onClick={() => rent(asset.assetNo)}>대여 신청</button>
                 </div>
               </div>
             ))}
+            {!assets.length ? <div className="workspace-empty">등록된 기자재가 없습니다.</div> : null}
           </div>
         </section>
 
@@ -81,7 +82,7 @@ export default function AssetPage() {
             {myRentals.map((rental) => (
               <div className="service-row" key={rental.rentalNo}>
                 <div>
-                  <strong>기자재 #{rental.assetNo}</strong>
+                  <strong>{rental.assetName || `기자재 #${rental.assetNo}`}</strong>
                   <span>반납 예정 {String(rental.returnDueDate || '').slice(0, 10) || '-'}</span>
                 </div>
                 <span className={`status-pill ${statusClass(rental.rentalStatus)}`}>{rentalStatusText[rental.rentalStatus] || rental.rentalStatus}</span>

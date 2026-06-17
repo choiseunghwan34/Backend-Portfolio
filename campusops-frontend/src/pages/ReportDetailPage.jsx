@@ -58,14 +58,14 @@ export default function ReportDetailPage() {
                 <span className="workspace-label">ADMIN RESPONSE</span>
                 <h3>관리자 처리 메모</h3>
               </div>
-              <p>{report.adminReply || '담당자가 내용을 확인한 뒤 처리 결과를 이곳에 남깁니다.'}</p>
+              <p>{report.adminReply || '담당자가 내용을 확인한 뒤 처리 결과를 남길 예정입니다.'}</p>
             </div>
           </section>
           <aside className="detail-side">
             <div className="detail-side__summary">
               <span>처리 흐름</span>
               <strong>{statusText}</strong>
-              <p>{statusText === '처리 완료' ? '요청 사항이 처리 완료되었습니다.' : '담당자가 신고 내용을 확인하고 있습니다.'}</p>
+              <p>{report.status === 'COMPLETED' ? '요청 사항이 처리 완료되었습니다.' : '담당자가 신고 내용을 확인하고 있습니다.'}</p>
             </div>
             <div><span>신고 위치</span><strong>{report.place}</strong></div>
             <div><span>분류</span><strong>{report.category || '시설'}</strong></div>

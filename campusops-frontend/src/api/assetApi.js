@@ -1,8 +1,8 @@
 import client from './client';
 
 export const assetApi = {
-  list: () => client.get('/api/assets'),
-  detail: (assetNo) => client.get(`/api/assets/${assetNo}`),
+  list: (config = {}) => client.get('/api/assets', config),
+  detail: (assetNo, config = {}) => client.get(`/api/assets/${assetNo}`, config),
   rent: (assetNo, payload) => client.post(`/api/assets/${assetNo}/rentals`, payload),
   myRentals: () => client.get('/api/rentals/my'),
   create: (payload) => client.post('/api/admin/assets', payload),

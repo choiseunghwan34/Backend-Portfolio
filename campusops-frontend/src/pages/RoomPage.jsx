@@ -50,7 +50,7 @@ export default function RoomPage() {
           <p>강의실, 회의실, 스터디룸의 이용 가능 여부를 확인하고 예약을 신청하세요.</p>
         </div>
         <dl>
-          <div><dt>예약 가능</dt><dd>{rooms.filter((r) => r.status !== 'DISABLED').length}개</dd></div>
+          <div><dt>예약 가능</dt><dd>{rooms.filter((r) => r.status !== 'DISABLED').length}곳</dd></div>
           <div><dt>내 예약</dt><dd>{myReservations.length}건</dd></div>
         </dl>
       </section>
@@ -70,6 +70,7 @@ export default function RoomPage() {
                 <span className={`status-pill ${statusClass(room.status)}`}>{roomStatusText[room.status] || room.status}</span>
               </Link>
             ))}
+            {!rooms.length ? <div className="workspace-empty">등록된 공간이 없습니다.</div> : null}
           </div>
         </section>
 
@@ -96,7 +97,7 @@ export default function RoomPage() {
           {myReservations.map((reservation) => (
             <div className="service-row" key={reservation.reservationNo}>
               <div>
-                <strong>공간 #{reservation.roomNo}</strong>
+                <strong>{reservation.roomName || `공간 #${reservation.roomNo}`}</strong>
                 <span>{reservation.reservationDate} · {reservation.startTime} - {reservation.endTime}</span>
               </div>
               <span className={`status-pill ${statusClass(reservation.status)}`}>{reservationStatusText[reservation.status] || reservation.status}</span>

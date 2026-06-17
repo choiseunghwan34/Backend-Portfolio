@@ -57,7 +57,7 @@ export default function ReportPage() {
             <label>장소<input required value={form.place} onChange={(e) => setForm({ ...form, place: e.target.value })} placeholder="예: 본관 3층 복도" /></label>
             <label>카테고리<input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="조명, 냉난방, 출입문 등" /></label>
             <label>제목<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="신고 제목" /></label>
-            <label>내용<textarea required rows="6" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="증상과 요청 내용을 입력하세요." /></label>
+            <label>내용<textarea required rows="6" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="증상과 요청 내용을 입력하세요" /></label>
             <button className="primary-button" type="submit">신고 등록</button>
           </form>
         </section>

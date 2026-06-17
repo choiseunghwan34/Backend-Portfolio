@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
@@ -20,17 +20,14 @@ import AdminReportPage from './pages/AdminReportPage';
 import AdminAssetPage from './pages/AdminAssetPage';
 import AdminRoomPage from './pages/AdminRoomPage';
 import HomePage from './pages/HomePage';
-import { getCurrentUser } from './utils/auth';
 
 export default function App() {
-  const user = getCurrentUser();
-
   return (
     <div className="app-shell">
       <Navbar />
       <main className="app-main">
         <Routes>
-          <Route path="/" element={user ? <Navigate to={user.role === 'ADMIN' ? '/admin' : '/dashboard'} replace /> : <HomePage />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />

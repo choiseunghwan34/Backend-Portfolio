@@ -22,13 +22,14 @@ export default function NoticeDetailPage() {
   return (
     <div className="notice-board-page">
       <section className="notice-board-hero compact">
-        <span className="workspace-label">NOTICE CENTER</span>
+        <span className="workspace-label">NOTICE DETAIL</span>
         <h1>공지사항</h1>
-        <p>운영 안내와 주요 공지를 확인하세요.</p>
+        <p>운영 안내와 주요 공지의 상세 내용을 확인하세요.</p>
       </section>
 
       <article className="notice-document">
         <header className="notice-document__head">
+          <div className="notice-document__eyebrow">CampusOps Notice</div>
           <h2>{notice.title}</h2>
           <div className="notice-document__meta">
             <span>{notice.category || '공지'}</span>
@@ -39,12 +40,15 @@ export default function NoticeDetailPage() {
         </header>
 
         <section className="notice-document__body">
+          <h3>공지 내용</h3>
           <p>{notice.content}</p>
         </section>
 
         <dl className="notice-document__file">
           <dt>첨부파일</dt>
           <dd>첨부파일이 없습니다.</dd>
+          <dt>수정일</dt>
+          <dd>{updatedDate}</dd>
         </dl>
 
         <nav className="notice-document__nav" aria-label="공지 이동">
