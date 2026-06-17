@@ -41,6 +41,12 @@ export default function RoomPage() {
     load();
   };
 
+  const cancelReservation = async (reservationNo) => {
+    if (!window.confirm('이 예약을 취소할까요?')) return;
+    await roomApi.cancel(reservationNo);
+    load();
+  };
+
   return (
     <div className="service-page service-page--room">
       <section className="service-hero">
@@ -100,7 +106,12 @@ export default function RoomPage() {
                 <strong>{reservation.roomName || `공간 #${reservation.roomNo}`}</strong>
                 <span>{reservation.reservationDate} · {reservation.startTime} - {reservation.endTime}</span>
               </div>
-              <span className={`status-pill ${statusClass(reservation.status)}`}>{reservationStatusText[reservation.status] || reservation.status}</span>
+              <div className="service-row__actions">
+                <span className={`status-pill ${statusClass(reservation.status)}`}>{reservationStatusText[reservation.status] || reservation.status}</span>
+                {reservation.status === 'RESERVED'
+                  ? <button className="secondary-button" type="button" onClick={() => cancelReservation(reservation.reservationNo)}>예약 취소</button>
+                  : null}
+              </div>
             </div>
           ))}
           {!myReservations.length ? <div className="workspace-empty">예약 내역이 없습니다.</div> : null}

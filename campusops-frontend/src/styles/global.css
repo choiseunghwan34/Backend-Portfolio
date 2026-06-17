@@ -3809,6 +3809,20 @@ select:focus-visible {
   font-weight: 800;
 }
 
+.pagination-current {
+  min-width: 104px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.58rem 0.9rem;
+  border: 1px solid #dce7f2;
+  border-radius: 999px;
+  background: #f8fbff;
+  color: #123b63;
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
 .service-page {
   width: min(1180px, 100%);
   display: grid;

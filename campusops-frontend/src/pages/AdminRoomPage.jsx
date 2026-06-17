@@ -7,8 +7,20 @@ function statusClass(value = '') {
   return String(value).toLowerCase();
 }
 
+const roomStatusText = {
+  AVAILABLE: '예약 가능',
+  DISABLED: '운영 중지'
+};
+
+const reservationStatusText = {
+  RESERVED: '예약됨',
+  CANCELLED: '취소됨',
+  COMPLETED: '이용 완료'
+};
+
 export default function AdminRoomPage() {
   const [form, setForm] = useState(empty);
+  const [editingId, setEditingId] = useState(null);
   const [items, setItems] = useState([]);
   const [reservations, setReservations] = useState([]);
 
@@ -22,42 +34,82 @@ export default function AdminRoomPage() {
 
   const submit = async (e) => {
     e.preventDefault();
-    await roomApi.create({ ...form, capacity: Number(form.capacity || 0) });
+    const payload = { ...form, capacity: Number(form.capacity || 0) };
+    if (editingId) await roomApi.update(editingId, payload);
+    else await roomApi.create(payload);
     setForm(empty);
+    setEditingId(null);
+    load();
+  };
+
+  const startEdit = (room) => {
+    setEditingId(room.roomNo);
+    setForm({
+      roomName: room.roomName,
+      location: room.location || '',
+      capacity: room.capacity || ''
+    });
+  };
+
+  const disable = async (roomNo) => {
+    if (!window.confirm('이 공간을 비활성화할까요?')) return;
+    await roomApi.disable(roomNo);
     load();
   };
 
   return (
     <div className="workspace-page">
       <section className="workspace-hero">
-        <div className="workspace-hero__copy"><span className="workspace-label">ROOM ADMIN</span><h1>공간 관리</h1><p>강의실, 회의실, 스터디룸을 등록하고 예약 현황을 관리합니다.</p></div>
-        <div className="workspace-hero__aside"><span>등록 공간</span><strong>{items.length}개</strong></div>
+        <div className="workspace-hero__copy">
+          <span className="workspace-label">ROOM ADMIN</span>
+          <h1>공간 관리</h1>
+          <p>강의실, 회의실, 스터디룸을 등록·수정하고 전체 예약 현황을 관리합니다.</p>
+        </div>
+        <div className="workspace-hero__aside"><span>등록 공간</span><strong>{items.length}곳</strong></div>
       </section>
+
       <div className="workspace-grid two">
         <section className="workspace-card">
-          <div className="workspace-card__head"><div><h2>공간 등록</h2><p>예약 가능한 공간 정보를 등록합니다.</p></div></div>
+          <div className="workspace-card__head">
+            <div><h2>{editingId ? '공간 수정' : '공간 등록'}</h2><p>예약 가능한 공간 정보를 관리합니다.</p></div>
+          </div>
           <form className="workspace-form" onSubmit={submit}>
             <label>이름<input required value={form.roomName} onChange={(e) => setForm({ ...form, roomName: e.target.value })} /></label>
             <label>위치<input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></label>
             <label>수용 인원<input type="number" min="0" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} /></label>
-            <button className="primary-button" type="submit">등록</button>
+            <div className="workspace-actions">
+              <button className="primary-button" type="submit">{editingId ? '수정 저장' : '등록'}</button>
+              {editingId ? <button className="secondary-button" type="button" onClick={() => { setEditingId(null); setForm(empty); }}>취소</button> : null}
+            </div>
           </form>
+
           <div className="workspace-list">
             {items.map((room) => (
               <div className="workspace-row" key={room.roomNo}>
                 <div className="workspace-row__main"><strong>{room.roomName}</strong><span>{room.location || '-'} · {room.capacity || 0}명</span></div>
-                <div className="workspace-row__actions"><span className={`status-pill ${statusClass(room.status)}`}>{room.status}</span><button className="secondary-button" onClick={() => roomApi.disable(room.roomNo).then(load)}>비활성화</button></div>
+                <div className="workspace-row__actions">
+                  <span className={`status-pill ${statusClass(room.status)}`}>{roomStatusText[room.status] || room.status}</span>
+                  <button className="secondary-button" type="button" onClick={() => startEdit(room)}>수정</button>
+                  <button className="secondary-button" type="button" disabled={room.status === 'DISABLED'} onClick={() => disable(room.roomNo)}>비활성화</button>
+                </div>
               </div>
             ))}
+            {!items.length ? <div className="workspace-empty">등록된 공간이 없습니다.</div> : null}
           </div>
         </section>
+
         <section className="workspace-card">
-          <div className="workspace-card__head"><div><h2>예약 관리</h2><p>전체 예약 신청과 이용 일정을 확인합니다.</p></div></div>
+          <div className="workspace-card__head">
+            <div><h2>예약 관리</h2><p>전체 예약 신청과 이용 일정을 확인합니다.</p></div>
+          </div>
           <div className="workspace-list">
             {reservations.map((reservation) => (
               <div className="workspace-row" key={reservation.reservationNo}>
-                <div className="workspace-row__main"><strong>예약 #{reservation.reservationNo}</strong><span>공간 #{reservation.roomNo} · {reservation.reservationDate} {reservation.startTime} - {reservation.endTime}</span></div>
-                <span className={`status-pill ${statusClass(reservation.status)}`}>{reservation.status || 'RESERVED'}</span>
+                <div className="workspace-row__main">
+                  <strong>{reservation.roomName || `예약 #${reservation.reservationNo}`}</strong>
+                  <span>공간 #{reservation.roomNo} · {reservation.reservationDate} {reservation.startTime} - {reservation.endTime}</span>
+                </div>
+                <span className={`status-pill ${statusClass(reservation.status)}`}>{reservationStatusText[reservation.status] || reservation.status || '예약됨'}</span>
               </div>
             ))}
             {!reservations.length ? <div className="workspace-empty">예약 내역이 없습니다.</div> : null}
