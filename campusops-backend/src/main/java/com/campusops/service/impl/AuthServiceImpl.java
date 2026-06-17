@@ -81,17 +81,8 @@ public class AuthServiceImpl implements AuthService {
         if (token == null || token.isBlank()) {
             return;
         }
-        long remainingMillis = jwtUtil.remainingMillis(token);
-        if (remainingMillis <= 0) {
-            return;
-        }
         TokenPrincipalDTO principal = jwtUtil.parseToken(token);
         String tokenHash = jwtUtil.tokenHash(token);
-        redisTemplate.opsForValue().set(
-                RedisKeys.tokenBlacklist(tokenHash),
-                RedisKeys.BLACKLIST_LOGOUT,
-                Duration.ofMillis(remainingMillis)
-        );
         redisTemplate.delete(RedisKeys.activeToken(principal.getUserNo(), tokenHash));
         redisTemplate.opsForSet().remove(RedisKeys.activeTokens(principal.getUserNo()), tokenHash);
     }

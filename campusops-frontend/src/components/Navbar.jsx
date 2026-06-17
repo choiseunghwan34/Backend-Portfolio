@@ -38,6 +38,7 @@ export default function Navbar() {
         <Link to="/assets" className={isActive('/assets') ? 'active' : ''}>기자재대여</Link>
         <Link to="/rooms" className={isActive('/rooms') ? 'active' : ''}>공간예약</Link>
         <Link to="/notifications" className={isActive('/notifications') ? 'active' : ''}>알림</Link>
+        <Link to="/qna" className={isActive('/qna') ? 'active' : ''}>Q&A</Link>
 
         {user ? (
           <>

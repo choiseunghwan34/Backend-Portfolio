@@ -1,7 +1,6 @@
 package com.campusops.util;
 
 public class RedisKeys {
-    public static final String BLACKLIST_LOGOUT = "LOGOUT";
     public static final String BLACKLIST_DUPLICATE_LOGIN = "DUPLICATE_LOGIN";
 
     private RedisKeys() {

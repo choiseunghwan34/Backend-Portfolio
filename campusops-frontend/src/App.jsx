@@ -20,6 +20,7 @@ import AdminReportPage from './pages/AdminReportPage';
 import AdminAssetPage from './pages/AdminAssetPage';
 import AdminRoomPage from './pages/AdminRoomPage';
 import HomePage from './pages/HomePage';
+import QnaPage from './pages/QnaPage';
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/qna" element={<QnaPage />} />
           <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
           <Route path="/notices" element={<ProtectedRoute><NoticeListPage /></ProtectedRoute>} />
           <Route path="/notices/:noticeNo" element={<ProtectedRoute><NoticeDetailPage /></ProtectedRoute>} />

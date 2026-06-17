@@ -14,7 +14,7 @@ const quickServices = [
   { no: '03', title: '시설 신고', description: '고장 접수와 처리 상태 확인', to: '/reports' },
   { no: '04', title: '공간 예약', description: '회의실과 세미나실 예약하기', to: '/rooms' },
   { no: '05', title: '알림센터', description: '내 알림과 처리 결과 확인', to: '/notifications' },
-  { no: '06', title: 'Q&A', description: '자주 묻는 질문과 이용 문의', to: '/login' }
+  { no: '06', title: 'Q&A', description: '자주 묻는 질문과 이용 문의', to: '/qna' }
 ];
 
 const actionLinks = [
@@ -23,7 +23,7 @@ const actionLinks = [
   { icon: 'edit', label: '신고 접수', to: '/reports' },
   { icon: 'box', label: '대여 신청', to: '/assets' },
   { icon: 'calendar', label: '예약 현황', to: '/rooms' },
-  { icon: 'chat', label: '문의하기', to: '/login' }
+  { icon: 'chat', label: '문의하기', to: '/qna' }
 ];
 
 const guides = [
