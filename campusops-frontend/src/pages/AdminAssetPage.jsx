@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { assetApi } from '../api/assetApi';
 import { confirmDialog, notify } from '../utils/dialog.jsx';
 
@@ -8,14 +8,26 @@ function statusClass(value = '') {
   return String(value).toLowerCase();
 }
 
-const assetStatusText = { AVAILABLE: '대여 가능', RENTED: '대여 중', DISABLED: '사용 중지' };
+const assetStatusText = { AVAILABLE: '대여 가능', RENTED: '대여중', DISABLED: '사용 중지' };
 const rentalStatusText = { REQUESTED: '신청', APPROVED: '승인', REJECTED: '반려', RETURNED: '반납', OVERDUE: '연체' };
 
 export default function AdminAssetPage() {
   const [form, setForm] = useState(empty);
   const [editingId, setEditingId] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const [items, setItems] = useState([]);
   const [rentals, setRentals] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  const previewUrl = useMemo(() => {
+    if (imageFile) return URL.createObjectURL(imageFile);
+    const editingAsset = items.find((item) => item.assetNo === editingId);
+    return editingAsset?.imageUrl || '';
+  }, [editingId, imageFile, items]);
+
+  useEffect(() => () => {
+    if (previewUrl?.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
 
   const load = async () => {
     const [assetRes, rentalRes] = await Promise.all([assetApi.list(), assetApi.rentals()]);
@@ -27,17 +39,36 @@ export default function AdminAssetPage() {
 
   const submit = async (event) => {
     event.preventDefault();
-    if (editingId) await assetApi.update(editingId, form);
-    else await assetApi.create(form);
-    await notify({ title: '저장 완료', message: '기자재 정보가 저장되었습니다.', type: 'success' });
-    setForm(empty);
-    setEditingId(null);
-    load();
+    setSaving(true);
+    try {
+      const response = editingId ? await assetApi.update(editingId, form) : await assetApi.create(form);
+      const savedAsset = response.data.data;
+      const assetNo = editingId || savedAsset?.assetNo;
+      if (imageFile && assetNo) {
+        await assetApi.uploadImage(assetNo, imageFile);
+      }
+      await notify({ title: '저장 완료', message: '기자재 정보가 저장되었습니다.', type: 'success' });
+      setForm(empty);
+      setEditingId(null);
+      setImageFile(null);
+      await load();
+    } catch (error) {
+      await notify({ title: '저장 실패', message: error?.response?.data?.message || '기자재 저장에 실패했습니다.', type: 'danger' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const startEdit = (asset) => {
     setEditingId(asset.assetNo);
+    setImageFile(null);
     setForm({ assetName: asset.assetName, category: asset.category || '', description: asset.description || '' });
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setImageFile(null);
+    setForm(empty);
   };
 
   const disable = async (assetNo) => {
@@ -66,27 +97,39 @@ export default function AdminAssetPage() {
         <div className="workspace-hero__copy">
           <span className="workspace-label">ASSET ADMIN</span>
           <h1>기자재 관리</h1>
-          <p>기자재를 등록·수정하고 대여 신청을 승인, 반려, 반납 처리합니다.</p>
+          <p>기자재 정보와 사진을 등록하고 대여 신청을 승인, 반려, 반납 처리합니다.</p>
         </div>
         <div className="workspace-hero__aside"><span>등록 기자재</span><strong>{items.length}개</strong></div>
       </section>
 
       <div className="workspace-grid two">
         <section className="workspace-card">
-          <div className="workspace-card__head"><div><h2>{editingId ? '기자재 수정' : '기자재 등록'}</h2><p>대여 가능한 기자재 정보를 관리합니다.</p></div></div>
+          <div className="workspace-card__head">
+            <div><h2>{editingId ? '기자재 수정' : '기자재 등록'}</h2><p>사용자에게 노출될 기자재 정보와 대표 사진을 관리합니다.</p></div>
+          </div>
           <form className="workspace-form" onSubmit={submit}>
             <label>이름<input required value={form.assetName} onChange={(event) => setForm({ ...form, assetName: event.target.value })} /></label>
             <label>카테고리<input value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} /></label>
             <label>설명<textarea rows="4" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
+            <label>대표 사진
+              <input type="file" accept="image/*" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
+            </label>
+            {previewUrl ? (
+              <div className="upload-preview">
+                <img src={previewUrl} alt="기자재 대표 사진 미리보기" />
+                <span>{imageFile ? imageFile.name : '현재 등록된 이미지'}</span>
+              </div>
+            ) : null}
             <div className="workspace-actions">
-              <button className="primary-button" type="submit">{editingId ? '수정 저장' : '등록'}</button>
-              {editingId ? <button className="secondary-button" type="button" onClick={() => { setEditingId(null); setForm(empty); }}>취소</button> : null}
+              <button className="primary-button" type="submit" disabled={saving}>{saving ? '저장 중...' : editingId ? '수정 저장' : '등록'}</button>
+              {editingId ? <button className="secondary-button" type="button" onClick={resetForm}>취소</button> : null}
             </div>
           </form>
 
           <div className="workspace-list">
             {items.map((asset) => (
-              <div className="workspace-row" key={asset.assetNo}>
+              <div className="workspace-row asset-admin-row" key={asset.assetNo}>
+                <div className="asset-thumb">{asset.imageUrl ? <img src={asset.imageUrl} alt="" /> : <span>NO IMAGE</span>}</div>
                 <div className="workspace-row__main"><strong>{asset.assetName}</strong><span>{asset.category || '기타'} · {asset.description || '설명 없음'}</span></div>
                 <div className="workspace-row__actions">
                   <span className={`status-pill ${statusClass(asset.status)}`}>{assetStatusText[asset.status] || asset.status}</span>
@@ -107,9 +150,9 @@ export default function AdminAssetPage() {
                 <div className="workspace-row__main"><strong>{rental.assetName || `신청 #${rental.rentalNo}`}</strong><span>기자재 #{rental.assetNo} · 사용자 #{rental.userNo}</span></div>
                 <div className="workspace-row__actions">
                   <span className={`status-pill ${statusClass(rental.rentalStatus)}`}>{rentalStatusText[rental.rentalStatus] || rental.rentalStatus}</span>
-                  <button className="secondary-button" type="button" onClick={() => handleRental(assetApi.approve, rental.rentalNo, '대여 신청이 승인되었습니다.')}>승인</button>
-                  <button className="secondary-button" type="button" onClick={() => handleRental(assetApi.reject, rental.rentalNo, '대여 신청이 반려되었습니다.')}>반려</button>
-                  <button className="secondary-button" type="button" onClick={() => handleRental(assetApi.returnRental, rental.rentalNo, '반납 처리되었습니다.')}>반납</button>
+                  <button className="secondary-button" type="button" onClick={() => handleRental(assetApi.approve, rental.rentalNo, '대여 신청을 승인했습니다.')}>승인</button>
+                  <button className="secondary-button" type="button" onClick={() => handleRental(assetApi.reject, rental.rentalNo, '대여 신청을 반려했습니다.')}>반려</button>
+                  <button className="secondary-button" type="button" onClick={() => handleRental(assetApi.returnRental, rental.rentalNo, '반납 처리했습니다.')}>반납</button>
                 </div>
               </div>
             ))}

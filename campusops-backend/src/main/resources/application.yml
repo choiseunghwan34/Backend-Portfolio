@@ -52,6 +52,11 @@ emailjs:
 app:
   frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
 
+supabase:
+  project-url: ${SUPABASE_PROJECT_URL:}
+  service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+  storage-bucket: ${SUPABASE_STORAGE_BUCKET:campusops-files}
+
 server:
   port: 8080
 

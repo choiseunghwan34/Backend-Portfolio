@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { assetApi } from '../api/assetApi';
+import { notify } from '../utils/dialog.jsx';
 
 function statusClass(value = '') {
   return String(value).toLowerCase();
@@ -16,6 +17,7 @@ export default function AssetDetailPage() {
   const { assetNo } = useParams();
   const [asset, setAsset] = useState(null);
   const [message, setMessage] = useState('');
+  const [renting, setRenting] = useState(false);
 
   const load = async () => {
     const { data } = await assetApi.detail(assetNo);
@@ -25,9 +27,17 @@ export default function AssetDetailPage() {
   useEffect(() => { load(); }, [assetNo]);
 
   const rent = async () => {
-    await assetApi.rent(assetNo, { rentalDays: 7 });
-    setMessage('대여 신청이 접수되었습니다.');
-    load();
+    setRenting(true);
+    try {
+      await assetApi.rent(assetNo, { rentalDays: 7 });
+      setMessage('대여 신청이 접수되었습니다.');
+      await notify({ title: '대여 신청 완료', message: '관리자 승인 후 대여가 확정됩니다.', type: 'success' });
+      await load();
+    } catch (error) {
+      await notify({ title: '대여 신청 실패', message: error?.response?.data?.message || '잠시 후 다시 시도해 주세요.', type: 'danger' });
+    } finally {
+      setRenting(false);
+    }
   };
 
   if (!asset) return <div className="workspace-card detail-article">불러오는 중...</div>;
@@ -57,6 +67,9 @@ export default function AssetDetailPage() {
 
         <div className="detail-layout">
           <section className="detail-body">
+            <div className="asset-detail-image">
+              {asset.imageUrl ? <img src={asset.imageUrl} alt={asset.assetName} /> : <span>등록된 사진이 없습니다.</span>}
+            </div>
             <h2>기자재 안내</h2>
             <p className="body-text">{asset.description || '등록된 설명이 없습니다.'}</p>
             {message ? <div className="detail-message">{message}</div> : null}
@@ -66,7 +79,7 @@ export default function AssetDetailPage() {
                 <h3>{canRent ? '지금 대여 신청이 가능합니다' : '현재는 대여 신청이 어렵습니다'}</h3>
                 <p>{canRent ? '신청 후 관리자 승인을 받으면 대여가 확정됩니다.' : '관리자 확인 후 상태가 변경되면 다시 신청할 수 있습니다.'}</p>
               </div>
-              <button className="primary-button" type="button" disabled={!canRent} onClick={rent}>대여 신청</button>
+              <button className="primary-button" type="button" disabled={!canRent || renting} onClick={rent}>{renting ? '신청 중...' : '대여 신청'}</button>
             </div>
           </section>
           <aside className="detail-side">

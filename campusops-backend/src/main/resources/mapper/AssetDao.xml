@@ -4,7 +4,16 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.campusops.dao.AssetDao">
     <sql id="assetColumns">
-        asset_no, asset_name, category, status, description, created_at
+        asset_no, asset_name, category, status, description, created_at,
+        (
+            SELECT fa.file_url
+            FROM file_attachment fa
+            WHERE fa.target_type = 'ASSET'
+              AND fa.target_no = asset.asset_no
+              AND fa.content_type LIKE 'image/%'
+            ORDER BY fa.attachment_no DESC
+            LIMIT 1
+        ) AS image_url
     </sql>
 
     <sql id="rentalColumns">

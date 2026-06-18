@@ -81,12 +81,15 @@ export default function AssetPage() {
           {loading ? (
             <SkeletonList rows={5} />
           ) : (
-            <div className="service-list">
+            <div className="service-list asset-directory">
               {assets.map((asset) => (
-                <div className="service-row" key={asset.assetNo}>
-                  <Link to={`/assets/${asset.assetNo}`}>
-                    <strong>{asset.assetName}</strong>
-                    <span>{asset.category || '기타'} · {asset.description || '설명 없음'}</span>
+                <div className="service-row asset-service-row" key={asset.assetNo}>
+                  <Link to={`/assets/${asset.assetNo}`} className="asset-row-link">
+                    <div className="asset-thumb">{asset.imageUrl ? <img src={asset.imageUrl} alt="" /> : <span>NO IMAGE</span>}</div>
+                    <div>
+                      <strong>{asset.assetName}</strong>
+                      <span>{asset.category || '기타'} · {asset.description || '설명 없음'}</span>
+                    </div>
                   </Link>
                   <div className="service-row__actions">
                     <span className={`status-pill ${statusClass(asset.status)}`}>{assetStatusText[asset.status] || asset.status}</span>

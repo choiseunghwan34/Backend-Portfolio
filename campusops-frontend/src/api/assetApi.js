@@ -7,6 +7,13 @@ export const assetApi = {
   myRentals: () => client.get('/api/rentals/my'),
   create: (payload) => client.post('/api/admin/assets', payload),
   update: (assetNo, payload) => client.put(`/api/admin/assets/${assetNo}`, payload),
+  uploadImage: (assetNo, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return client.post(`/api/files/ASSET/${assetNo}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
   disable: (assetNo) => client.patch(`/api/admin/assets/${assetNo}/disable`),
   rentals: () => client.get('/api/admin/assets/rentals'),
   approve: (rentalNo) => client.patch(`/api/admin/assets/rentals/${rentalNo}/approve`),

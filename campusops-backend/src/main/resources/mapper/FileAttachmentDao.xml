@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusops.dao.FileAttachmentDao">
+    <insert id="insertAttachment" parameterType="com.campusops.vo.FileAttachmentVO" useGeneratedKeys="true" keyProperty="attachmentNo" keyColumn="attachment_no">
+        INSERT INTO file_attachment (
+            target_type, target_no, original_name, file_path, file_url, content_type, file_size
+        )
+        VALUES (
+            #{targetType}, #{targetNo}, #{originalName}, #{filePath}, #{fileUrl}, #{contentType}, #{fileSize}
+        )
+    </insert>
+
+    <select id="selectByTarget" resultType="com.campusops.vo.FileAttachmentVO">
+        SELECT attachment_no, target_type, target_no, original_name, file_path, file_url, content_type, file_size, created_at
+        FROM file_attachment
+        WHERE target_type = #{targetType}
+          AND target_no = #{targetNo}
+        ORDER BY attachment_no DESC
+    </select>
+</mapper>

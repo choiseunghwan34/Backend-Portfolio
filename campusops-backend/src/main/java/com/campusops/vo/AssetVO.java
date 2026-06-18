@@ -11,5 +11,6 @@ public class AssetVO {
     private String category;
     private String status;
     private String description;
+    private String imageUrl;
     private LocalDateTime createdAt;
 }

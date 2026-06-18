@@ -81,8 +81,21 @@ CREATE TABLE IF NOT EXISTS notification (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS file_attachment (
+    attachment_no BIGSERIAL PRIMARY KEY,
+    target_type VARCHAR(30) NOT NULL,
+    target_no BIGINT NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    file_path TEXT NOT NULL,
+    file_url TEXT NOT NULL,
+    content_type VARCHAR(100),
+    file_size BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_notice_important_created ON notice (important_yn DESC, notice_no DESC);
 CREATE INDEX IF NOT EXISTS idx_report_user_no ON facility_report (user_no);
 CREATE INDEX IF NOT EXISTS idx_asset_rental_user_no ON asset_rental (user_no);
 CREATE INDEX IF NOT EXISTS idx_room_reservation_room_date ON room_reservation (room_no, reservation_date);
 CREATE INDEX IF NOT EXISTS idx_notification_user_read ON notification (user_no, read_yn);
+CREATE INDEX IF NOT EXISTS idx_file_attachment_target ON file_attachment (target_type, target_no, attachment_no DESC);
