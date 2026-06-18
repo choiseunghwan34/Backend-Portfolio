@@ -82,9 +82,7 @@ export default function NoticeDetailPage() {
         </dl>
 
         <nav className="notice-document__nav" aria-label="공지 이동">
-          <button type="button" className="notice-circle" disabled>이전글</button>
-          <Link to="/notices" className="notice-document__list">목록</Link>
-          <button type="button" className="notice-circle" disabled>다음글</button>
+          <Link to="/notices" className="notice-document__list">목록으로 돌아가기</Link>
         </nav>
       </article>
     </div>

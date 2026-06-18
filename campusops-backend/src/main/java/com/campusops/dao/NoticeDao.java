@@ -12,6 +12,8 @@ public interface NoticeDao {
     List<NoticeVO> selectNotices(Map<String, Object> params);
     long countNotices(Map<String, Object> params);
     NoticeVO selectNotice(@Param("noticeNo") Long noticeNo);
+    NoticeVO selectPreviousNotice(@Param("noticeNo") Long noticeNo);
+    NoticeVO selectNextNotice(@Param("noticeNo") Long noticeNo);
     NoticeVO selectNoticeForUpdate(@Param("noticeNo") Long noticeNo);
     int insertNotice(NoticeVO noticeVO);
     int updateNotice(NoticeVO noticeVO);

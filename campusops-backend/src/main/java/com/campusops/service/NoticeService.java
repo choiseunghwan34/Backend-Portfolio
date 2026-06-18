@@ -9,6 +9,7 @@ import java.util.Map;
 public interface NoticeService {
     Map<String, Object> getNotices(String keyword, int page, int size);
     NoticeVO getNotice(Long noticeNo);
+    Map<String, Object> getNoticeDetail(Long noticeNo);
     NoticeVO createNotice(NoticeRequestDTO request);
     NoticeVO updateNotice(Long noticeNo, NoticeRequestDTO request);
     void deleteNotice(Long noticeNo);
