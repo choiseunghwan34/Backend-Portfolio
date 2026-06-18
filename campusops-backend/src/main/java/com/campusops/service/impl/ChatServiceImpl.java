@@ -10,6 +10,7 @@ import com.campusops.util.SecurityUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
@@ -19,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -30,6 +32,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatServiceImpl implements ChatService {
     private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent";
     private static final int MAX_HISTORY = 8;
@@ -41,7 +44,7 @@ public class ChatServiceImpl implements ChatService {
     @Value("${gemini.api-key:}")
     private String apiKey;
 
-    @Value("${gemini.model:gemini-1.5-flash}")
+    @Value("${gemini.model:gemini-flash-latest}")
     private String model;
 
     @Value("${gemini.requests-per-minute:12}")
@@ -65,10 +68,11 @@ public class ChatServiceImpl implements ChatService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
+        String resolvedModel = model == null ? "gemini-flash-latest" : model.trim();
         String url = UriComponentsBuilder
                 .fromHttpUrl(GEMINI_URL)
-                .queryParam("key", apiKey)
-                .buildAndExpand(model)
+                .queryParam("key", apiKey.trim())
+                .buildAndExpand(resolvedModel)
                 .toUriString();
 
         try {
@@ -78,11 +82,17 @@ public class ChatServiceImpl implements ChatService {
                     .path("content").path("parts").path(0)
                     .path("text").asText("");
             if (!StringUtils.hasText(answer)) {
+                log.warn("Gemini returned empty answer. model={}, response={}", resolvedModel, response);
                 throw new BusinessException("AI 답변을 생성하지 못했습니다.", 502);
             }
             return new ChatResponseDTO(answer.trim());
+        } catch (HttpStatusCodeException exception) {
+            log.warn("Gemini API returned error. status={}, model={}, body={}",
+                    exception.getStatusCode(), resolvedModel, exception.getResponseBodyAsString());
+            throw new BusinessException(toFriendlyGeminiMessage(exception), 502);
         } catch (RestClientException exception) {
-            throw new BusinessException("AI 서버 호출에 실패했습니다. Gemini API 키와 모델명을 확인해 주세요.", 502);
+            log.warn("Gemini API request failed. model={}", resolvedModel, exception);
+            throw new BusinessException("AI 서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.", 502);
         }
     }
 
@@ -133,12 +143,30 @@ public class ChatServiceImpl implements ChatService {
                 TokenPrincipalDTO principal = SecurityUtil.currentPrincipal();
                 return "user:" + principal.getUserNo();
             } catch (Exception ignored) {
-                // Fall back to IP when an optional token is unavailable.
+                // Optional token이 없으면 IP 기준 제한으로 처리합니다.
             }
         }
         String forwardedFor = request.getHeader("X-Forwarded-For");
         String ip = StringUtils.hasText(forwardedFor) ? forwardedFor.split(",")[0].trim() : request.getRemoteAddr();
         return "ip:" + ip;
+    }
+
+    private String toFriendlyGeminiMessage(HttpStatusCodeException exception) {
+        int status = exception.getStatusCode().value();
+        String body = exception.getResponseBodyAsString();
+        if (status == 400 && body != null && body.contains("not found")) {
+            return "Gemini 모델명을 찾을 수 없습니다. Render의 GEMINI_MODEL 값을 gemini-flash-latest 또는 gemini-2.5-flash로 바꿔 주세요.";
+        }
+        if (status == 400) {
+            return "Gemini 요청 형식이 올바르지 않습니다. Render 로그의 Gemini API 오류 내용을 확인해 주세요.";
+        }
+        if (status == 403) {
+            return "Gemini API 키 권한이 없습니다. Google AI Studio에서 키를 다시 복사하고 Render 환경변수를 확인해 주세요.";
+        }
+        if (status == 429) {
+            return "Gemini 무료 사용량 또는 요청 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.";
+        }
+        return "AI 서버 호출에 실패했습니다. Render 로그에서 Gemini API 오류 내용을 확인해 주세요.";
     }
 
     private String systemPrompt() {
