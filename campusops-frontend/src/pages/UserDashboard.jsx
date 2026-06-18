@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { dashboardApi } from '../api/dashboardApi';
-import { reportApi } from '../api/reportApi';
-import { assetApi } from '../api/assetApi';
-import { roomApi } from '../api/roomApi';
+import { homeApi } from '../api/homeApi';
 
 function statusClass(value = '') {
   return String(value).toLowerCase();
@@ -18,18 +15,13 @@ export default function UserDashboard() {
 
   useEffect(() => {
     (async () => {
-      const [recentRes, unreadRes, reportRes, rentalRes, reservationRes] = await Promise.all([
-        dashboardApi.userRecentNotices(),
-        dashboardApi.unreadCount(),
-        reportApi.my(),
-        assetApi.myRentals(),
-        roomApi.myReservations()
-      ]);
-      setNotices(recentRes.data.data || []);
-      setUnreadCount(unreadRes.data.data || 0);
-      setMyReports(reportRes.data.data || []);
-      setMyRentals(rentalRes.data.data || []);
-      setMyReservations(reservationRes.data.data || []);
+      const { data } = await homeApi.summary();
+      const payload = data?.data || {};
+      setNotices(payload.notices || []);
+      setUnreadCount(payload.unreadCount || 0);
+      setMyReports(payload.reports || []);
+      setMyRentals(payload.rentals || []);
+      setMyReservations(payload.reservations || []);
     })();
   }, []);
 

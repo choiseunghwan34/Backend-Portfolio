@@ -1,11 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
-import { assetApi } from '../api/assetApi';
-import { noticeApi } from '../api/noticeApi';
-import { notificationApi } from '../api/notificationApi';
-import { reportApi } from '../api/reportApi';
-import { roomApi } from '../api/roomApi';
+import { homeApi } from '../api/homeApi';
 import { clearSession, getCurrentUser } from '../utils/auth';
 
 const quickServices = [
@@ -119,39 +115,22 @@ export default function HomePage() {
 
   useEffect(() => {
     let mounted = true;
-    const user = getCurrentUser();
 
     async function loadHomeData() {
-      const [noticeRes, assetRes, roomRes] = await Promise.allSettled([
-        noticeApi.list({ page: 1, size: 4 }, { skipAuth: true }),
-        assetApi.list({ skipAuth: true }),
-        roomApi.list({ skipAuth: true })
-      ]);
-
-      const privateResults = user
-        ? await Promise.allSettled([
-            reportApi.my(),
-            assetApi.myRentals(),
-            roomApi.myReservations(),
-            notificationApi.unreadCount()
-          ])
-        : [];
-
+      const { data } = await homeApi.summary();
       if (!mounted) return;
 
-      const unreadPayload = unwrap(privateResults[3], 0);
+      const payload = data?.data || {};
       setHome({
-        notices: toArray(unwrap(noticeRes)),
-        assets: toArray(unwrap(assetRes)),
-        rooms: toArray(unwrap(roomRes)),
-        reports: toArray(unwrap(privateResults[0])),
-        rentals: toArray(unwrap(privateResults[1])),
-        reservations: toArray(unwrap(privateResults[2])),
-        unreadCount: Number(unreadPayload?.count ?? unreadPayload ?? 0),
+        notices: toArray(payload.notices),
+        assets: toArray(payload.assets),
+        rooms: toArray(payload.rooms),
+        reports: toArray(payload.reports),
+        rentals: toArray(payload.rentals),
+        reservations: toArray(payload.reservations),
+        unreadCount: Number(payload.unreadCount ?? 0),
         loading: false,
-        error: [noticeRes, assetRes, roomRes, ...privateResults].some((result) => result.status === 'rejected')
-          ? '일부 운영 데이터를 불러오지 못했습니다.'
-          : ''
+        error: ''
       });
     }
 

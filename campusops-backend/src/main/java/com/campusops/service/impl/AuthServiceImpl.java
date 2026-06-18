@@ -14,6 +14,7 @@ import com.campusops.util.SecurityUtil;
 import com.campusops.vo.UserVO;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -30,6 +31,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
     private static final Duration EMAIL_TOKEN_TTL = Duration.ofMinutes(10);
     private static final String EMAIL_VERIFIED_VALUE = "VERIFIED";
@@ -209,7 +211,16 @@ public class AuthServiceImpl implements AuthService {
             helper.setText(buildVerificationMailText(verificationUrl), false);
             mailSender.send(message);
         } catch (Exception exception) {
+            log.warn("Failed to send CampusOps verification mail. to={}, from={}, host={}", email, resolveSenderSafely(), mailHost, exception);
             throw new BusinessException("인증 메일 발송에 실패했습니다. SMTP 계정과 앱 비밀번호를 확인해 주세요.", 500);
+        }
+    }
+
+    private String resolveSenderSafely() {
+        try {
+            return resolveSender();
+        } catch (Exception exception) {
+            return "";
         }
     }
 
