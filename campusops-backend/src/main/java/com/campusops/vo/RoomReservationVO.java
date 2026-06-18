@@ -12,6 +12,10 @@ public class RoomReservationVO {
     private Long roomNo;
     private String roomName;
     private String location;
+    private Long seatNo;
+    private String seatCode;
+    private String rowLabel;
+    private Integer colNo;
     private Long userNo;
     private LocalDate reservationDate;
     private LocalTime startTime;

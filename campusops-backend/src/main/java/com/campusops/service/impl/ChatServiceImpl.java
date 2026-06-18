@@ -9,10 +9,10 @@ import com.campusops.service.ChatService;
 import com.campusops.util.SecurityUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,46 +29,59 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ChatServiceImpl implements ChatService {
     private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent";
-    private static final int MAX_HISTORY = 8;
-    private static final int MAX_MESSAGE_LENGTH = 600;
+    private static final int MAX_HISTORY = 6;
+    private static final int MAX_MESSAGE_LENGTH = 500;
     private static final List<String> FALLBACK_MODELS = List.of(
-            "gemini-2.5-flash",
             "gemini-2.0-flash",
+            "gemini-2.5-flash",
             "gemini-flash-latest"
     );
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${gemini.api-key:}")
     private String apiKey;
 
-    @Value("${gemini.model:gemini-2.5-flash}")
+    @Value("${gemini.model:gemini-2.0-flash}")
     private String model;
 
-    @Value("${gemini.requests-per-minute:12}")
+    @Value("${gemini.requests-per-minute:8}")
     private int requestsPerMinute;
+
+    public ChatServiceImpl(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofSeconds(3));
+        requestFactory.setReadTimeout(Duration.ofSeconds(8));
+        this.restTemplate = new RestTemplate(requestFactory);
+    }
 
     @Override
     public ChatResponseDTO ask(ChatRequestDTO request, HttpServletRequest servletRequest) {
-        ensureConfigured();
         String message = normalizeMessage(request.getMessage());
+        String quickAnswer = findQuickAnswer(message);
+        if (quickAnswer != null) {
+            return new ChatResponseDTO(quickAnswer);
+        }
+
+        ensureConfigured();
         enforceRateLimit(resolveRequesterKey(servletRequest));
 
         Map<String, Object> body = Map.of(
                 "systemInstruction", Map.of("parts", List.of(Map.of("text", systemPrompt()))),
                 "contents", buildContents(request.getHistory(), message),
                 "generationConfig", Map.of(
-                        "temperature", 0.35,
-                        "maxOutputTokens", 520
+                        "temperature", 0.28,
+                        "maxOutputTokens", 360
                 )
         );
 
@@ -125,6 +138,38 @@ public class ChatServiceImpl implements ChatService {
         return new ChatResponseDTO(answer.trim());
     }
 
+    private String findQuickAnswer(String message) {
+        String normalized = message.toLowerCase(Locale.ROOT).replace(" ", "");
+        if (containsAny(normalized, "강의실예약", "공간예약", "예약방법", "예약어떻게")) {
+            return "공간 예약은 상단 메뉴의 공간예약에서 진행할 수 있습니다. 원하는 공간을 선택한 뒤 날짜와 시작/종료 시간을 고르고 예약 신청을 누르면 됩니다. 이미 예약된 시간이나 운영중지 공간은 신청할 수 없습니다.";
+        }
+        if (containsAny(normalized, "시설신고", "고장신고", "신고처리", "처리상태")) {
+            return "시설 신고는 시설신고 메뉴에서 접수할 수 있습니다. 장소, 카테고리, 제목, 내용을 입력하면 내 신고 목록에서 상태를 확인할 수 있어요. 상태는 접수, 확인중, 완료, 반려 순서로 관리됩니다.";
+        }
+        if (containsAny(normalized, "기자재", "대여", "반납", "노트북", "태블릿", "카메라")) {
+            return "기자재 대여는 기자재대여 메뉴에서 신청할 수 있습니다. 대여 가능한 기자재를 선택해 신청하면 관리자가 승인 또는 반려 처리합니다. 승인 후 반납 처리까지 내 대여 내역에서 확인할 수 있습니다.";
+        }
+        if (containsAny(normalized, "공지", "공지사항", "안내문")) {
+            return "공지사항은 공지사항 메뉴에서 확인할 수 있습니다. 중요 공지는 목록 상단과 상세 화면에서 별도로 표시되고, 검색어로 제목과 내용을 검색할 수 있습니다.";
+        }
+        if (containsAny(normalized, "알림", "읽지않은", "알림센터")) {
+            return "알림 메뉴에서 내 알림을 확인할 수 있습니다. 신고 처리, 대여 승인/반려, 예약 관련 결과가 있을 때 알림이 생성되고 읽음 처리도 가능합니다.";
+        }
+        if (containsAny(normalized, "관리자", "admin", "대시보드")) {
+            return "관리자는 관리자 계정으로 로그인한 뒤 대시보드에서 공지 등록, 신고 처리, 대여 승인, 공간/예약 관리를 할 수 있습니다. 일반 사용자는 관리자 메뉴에 접근할 수 없습니다.";
+        }
+        return null;
+    }
+
+    private boolean containsAny(String value, String... keywords) {
+        for (String keyword : keywords) {
+            if (value.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private Set<String> candidateModels() {
         Set<String> models = new LinkedHashSet<>();
         models.add(resolvePrimaryModel());
@@ -133,7 +178,7 @@ public class ChatServiceImpl implements ChatService {
     }
 
     private String resolvePrimaryModel() {
-        return StringUtils.hasText(model) ? model.trim() : "gemini-2.5-flash";
+        return StringUtils.hasText(model) ? model.trim() : "gemini-2.0-flash";
     }
 
     private boolean isRetryableGeminiError(HttpStatusCodeException exception) {
@@ -142,7 +187,7 @@ public class ChatServiceImpl implements ChatService {
         return status == 429
                 || status == 503
                 || status == 504
-                || (status == 404 && body != null && body.toLowerCase().contains("not found"));
+                || (status == 404 && body != null && body.toLowerCase(Locale.ROOT).contains("not found"));
     }
 
     private List<Map<String, Object>> buildContents(List<ChatMessageDTO> history, String message) {
@@ -203,8 +248,8 @@ public class ChatServiceImpl implements ChatService {
     private String toFriendlyGeminiMessage(HttpStatusCodeException exception) {
         int status = exception.getStatusCode().value();
         String body = exception.getResponseBodyAsString();
-        if (status == 400 && body != null && body.toLowerCase().contains("not found")) {
-            return "Gemini 모델명을 찾을 수 없습니다. Render의 GEMINI_MODEL 값을 gemini-2.5-flash 또는 gemini-2.0-flash로 바꿔 주세요.";
+        if (status == 400 && body != null && body.toLowerCase(Locale.ROOT).contains("not found")) {
+            return "Gemini 모델명을 찾을 수 없습니다. Render의 GEMINI_MODEL 값을 gemini-2.0-flash 또는 gemini-2.5-flash로 바꿔 주세요.";
         }
         if (status == 400) {
             return "Gemini 요청 형식이 올바르지 않습니다. Render 로그의 Gemini API 오류 내용을 확인해 주세요.";

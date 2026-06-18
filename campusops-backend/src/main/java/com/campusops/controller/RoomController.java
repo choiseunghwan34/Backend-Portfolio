@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,6 +27,19 @@ public class RoomController {
     @GetMapping("/{roomNo}")
     public ApiResponse<?> detail(@PathVariable Long roomNo) {
         return ApiResponse.success("공간 상세 조회 성공", roomService.getRoom(roomNo));
+    }
+
+    @GetMapping("/{roomNo}/seats")
+    public ApiResponse<?> seats(@PathVariable Long roomNo) {
+        return ApiResponse.success("좌석 목록 조회 성공", roomService.getSeats(roomNo));
+    }
+
+    @GetMapping("/{roomNo}/seats/status")
+    public ApiResponse<?> seatStatus(@PathVariable Long roomNo,
+                                     @RequestParam String reservationDate,
+                                     @RequestParam String startTime,
+                                     @RequestParam String endTime) {
+        return ApiResponse.success("좌석 예약 현황 조회 성공", roomService.getSeatStatus(roomNo, reservationDate, startTime, endTime));
     }
 
     @GetMapping("/{roomNo}/reservations")

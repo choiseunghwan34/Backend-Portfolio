@@ -59,8 +59,8 @@ supabase:
 
 gemini:
   api-key: ${GEMINI_API_KEY:}
-  model: ${GEMINI_MODEL:gemini-2.5-flash}
-  requests-per-minute: ${GEMINI_REQUESTS_PER_MINUTE:12}
+  model: ${GEMINI_MODEL:gemini-2.0-flash}
+  requests-per-minute: ${GEMINI_REQUESTS_PER_MINUTE:8}
 
 server:
   port: 8080

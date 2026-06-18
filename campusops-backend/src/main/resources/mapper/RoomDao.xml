@@ -8,8 +8,13 @@
     </sql>
 
     <sql id="reservationColumns">
-        rr.reservation_no, rr.room_no, r.room_name, r.location, rr.user_no,
+        rr.reservation_no, rr.room_no, r.room_name, r.location,
+        rr.seat_no, rs.seat_code, rs.row_label, rs.col_no, rr.user_no,
         rr.reservation_date, rr.start_time, rr.end_time, rr.status, rr.created_at
+    </sql>
+
+    <sql id="seatColumns">
+        seat_no, room_no, seat_code, row_label, col_no, status, created_at
     </sql>
 
     <select id="selectRooms" resultType="com.campusops.vo.RoomVO">
@@ -43,10 +48,48 @@
         WHERE room_no = #{roomNo}
     </update>
 
+    <select id="selectSeats" resultType="com.campusops.vo.RoomSeatVO">
+        SELECT <include refid="seatColumns" />
+        FROM room_seat
+        WHERE room_no = #{roomNo}
+        ORDER BY row_label, col_no, seat_code
+    </select>
+
+    <select id="selectSeat" resultType="com.campusops.vo.RoomSeatVO">
+        SELECT <include refid="seatColumns" />
+        FROM room_seat
+        WHERE seat_no = #{seatNo}
+    </select>
+
+    <select id="selectSeatStatus" resultType="com.campusops.vo.RoomSeatVO">
+        SELECT
+            rs.seat_no,
+            rs.room_no,
+            rs.seat_code,
+            rs.row_label,
+            rs.col_no,
+            rs.status,
+            rs.created_at,
+            EXISTS (
+                SELECT 1
+                FROM room_reservation rr
+                WHERE rr.room_no = rs.room_no
+                  AND rr.seat_no = rs.seat_no
+                  AND rr.reservation_date = #{reservationDate}
+                  AND rr.status = 'RESERVED'
+                  AND rr.start_time &lt; #{endTime}
+                  AND rr.end_time &gt; #{startTime}
+            ) AS reserved
+        FROM room_seat rs
+        WHERE rs.room_no = #{roomNo}
+        ORDER BY rs.row_label, rs.col_no, rs.seat_code
+    </select>
+
     <select id="selectReservationsByRoom" resultType="com.campusops.vo.RoomReservationVO">
         SELECT <include refid="reservationColumns" />
         FROM room_reservation rr
         JOIN room r ON rr.room_no = r.room_no
+        LEFT JOIN room_seat rs ON rr.seat_no = rs.seat_no
         WHERE rr.room_no = #{roomNo}
         ORDER BY rr.reservation_date DESC, rr.start_time DESC
     </select>
@@ -55,6 +98,7 @@
         SELECT <include refid="reservationColumns" />
         FROM room_reservation rr
         JOIN room r ON rr.room_no = r.room_no
+        LEFT JOIN room_seat rs ON rr.seat_no = rs.seat_no
         WHERE rr.user_no = #{userNo}
         ORDER BY rr.reservation_date DESC, rr.start_time DESC
     </select>
@@ -63,12 +107,13 @@
         SELECT <include refid="reservationColumns" />
         FROM room_reservation rr
         JOIN room r ON rr.room_no = r.room_no
+        LEFT JOIN room_seat rs ON rr.seat_no = rs.seat_no
         ORDER BY rr.reservation_date DESC, rr.start_time DESC
     </select>
 
     <insert id="insertReservation" parameterType="com.campusops.vo.RoomReservationVO" useGeneratedKeys="true" keyProperty="reservationNo" keyColumn="reservation_no">
-        INSERT INTO room_reservation (room_no, user_no, reservation_date, start_time, end_time, status)
-        VALUES (#{roomNo}, #{userNo}, #{reservationDate}, #{startTime}, #{endTime}, COALESCE(#{status}, 'RESERVED'))
+        INSERT INTO room_reservation (room_no, seat_no, user_no, reservation_date, start_time, end_time, status)
+        VALUES (#{roomNo}, #{seatNo}, #{userNo}, #{reservationDate}, #{startTime}, #{endTime}, COALESCE(#{status}, 'RESERVED'))
     </insert>
 
     <update id="cancelReservation">
@@ -101,6 +146,10 @@
         WHERE room_no = #{roomNo}
           AND reservation_date = #{reservationDate}
           AND status = 'RESERVED'
+          AND (
+              (#{seatNo} IS NOT NULL AND seat_no = #{seatNo})
+              OR (#{seatNo} IS NULL AND seat_no IS NULL)
+          )
           AND start_time &lt; #{endTime}
           AND end_time &gt; #{startTime}
     </select>

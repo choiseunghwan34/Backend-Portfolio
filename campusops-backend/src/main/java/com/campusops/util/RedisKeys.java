@@ -18,6 +18,10 @@ public class RedisKeys {
         return "reservation:hold:" + roomNo + ":" + date + ":" + startTime;
     }
 
+    public static String reservationSeatHold(Long roomNo, String date, String startTime, Long seatNo) {
+        return "reservation:hold:" + roomNo + ":" + date + ":" + startTime + ":seat:" + seatNo;
+    }
+
     public static String unreadCount(Long userNo) {
         return "notification:unread:" + userNo;
     }

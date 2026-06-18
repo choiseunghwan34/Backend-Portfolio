@@ -11,4 +11,5 @@ public class ReservationRequestDTO {
     private String startTime;
     @NotBlank
     private String endTime;
+    private Long seatNo;
 }

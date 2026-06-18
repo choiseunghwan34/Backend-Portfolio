@@ -29,7 +29,7 @@ export default function ChatWidget() {
     setLoading(true);
 
     try {
-      const history = nextMessages.slice(-8).map(({ role, content: itemContent }) => ({ role, content: itemContent }));
+      const history = nextMessages.slice(-6).map(({ role, content: itemContent }) => ({ role, content: itemContent }));
       const { data } = await chatApi.ask({ message: content, history });
       setMessages([...nextMessages, { role: 'assistant', content: data.data.answer }]);
     } catch (error) {
@@ -64,7 +64,13 @@ export default function ChatWidget() {
                 {message.content}
               </div>
             ))}
-            {loading ? <div className="chat-message chat-message--assistant">답변을 정리하는 중입니다...</div> : null}
+            {loading ? (
+              <div className="chat-message chat-message--assistant chat-message--typing">
+                <span />
+                <span />
+                <span />
+              </div>
+            ) : null}
           </div>
 
           <div className="chat-panel__starters">
@@ -87,9 +93,9 @@ export default function ChatWidget() {
               value={input}
               onChange={(event) => setInput(event.target.value)}
               placeholder="CampusOps 이용 방법을 물어보세요"
-              maxLength={600}
+              maxLength={500}
             />
-            <button type="submit" disabled={loading || !input.trim()}>전송</button>
+            <button type="submit" disabled={loading || !input.trim()}>{loading ? '대기' : '전송'}</button>
           </form>
         </section>
       ) : null}

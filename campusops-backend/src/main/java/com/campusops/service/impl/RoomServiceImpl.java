@@ -9,6 +9,7 @@ import com.campusops.service.RoomService;
 import com.campusops.util.RedisKeys;
 import com.campusops.util.SecurityUtil;
 import com.campusops.vo.RoomReservationVO;
+import com.campusops.vo.RoomSeatVO;
 import com.campusops.vo.RoomVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -39,6 +40,24 @@ public class RoomServiceImpl implements RoomService {
             throw new BusinessException("공간을 찾을 수 없습니다.", 404);
         }
         return room;
+    }
+
+    @Override
+    public List<RoomSeatVO> getSeats(Long roomNo) {
+        getRoom(roomNo);
+        return roomDao.selectSeats(roomNo);
+    }
+
+    @Override
+    public List<RoomSeatVO> getSeatStatus(Long roomNo, String reservationDate, String startTime, String endTime) {
+        getRoom(roomNo);
+        LocalDate date = LocalDate.parse(reservationDate);
+        LocalTime start = LocalTime.parse(startTime);
+        LocalTime end = LocalTime.parse(endTime);
+        if (!start.isBefore(end)) {
+            throw new BusinessException("종료 시간은 시작 시간보다 늦어야 합니다.");
+        }
+        return roomDao.selectSeatStatus(roomNo, date, start, end);
     }
 
     @Override
@@ -87,26 +106,30 @@ public class RoomServiceImpl implements RoomService {
         LocalDate reservationDate = LocalDate.parse(request.getReservationDate());
         LocalTime startTime = LocalTime.parse(request.getStartTime());
         LocalTime endTime = LocalTime.parse(request.getEndTime());
-        if (!startTime.isBefore(endTime)) {
-            throw new BusinessException("종료 시간은 시작 시간보다 늦어야 합니다.");
-        }
-        if (reservationDate.isBefore(LocalDate.now())
-                || (reservationDate.isEqual(LocalDate.now()) && !startTime.isAfter(LocalTime.now()))) {
-            throw new BusinessException("지난 시간은 예약할 수 없습니다.");
-        }
+        validateReservationTime(reservationDate, startTime, endTime);
 
-        String key = RedisKeys.reservationHold(roomNo, request.getReservationDate(), request.getStartTime());
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
-            throw new BusinessException("이미 예약 신청이 진행 중인 시간입니다.", 429);
+        RoomSeatVO selectedSeat = resolveSeat(roomNo, request.getSeatNo());
+        String holdKey = selectedSeat == null
+                ? RedisKeys.reservationHold(roomNo, request.getReservationDate(), request.getStartTime())
+                : RedisKeys.reservationSeatHold(roomNo, request.getReservationDate(), request.getStartTime(), selectedSeat.getSeatNo());
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(holdKey))) {
+            throw new BusinessException("이미 예약 신청이 진행 중인 좌석 또는 시간입니다.", 429);
         }
-        redisTemplate.opsForValue().set(key, "1", Duration.ofMinutes(5));
+        redisTemplate.opsForValue().set(holdKey, "1", Duration.ofMinutes(5));
 
-        if (roomDao.existsReservation(roomNo, reservationDate, startTime, endTime) > 0) {
-            throw new BusinessException("이미 예약된 시간입니다.");
+        Long seatNo = selectedSeat == null ? null : selectedSeat.getSeatNo();
+        if (roomDao.existsReservation(roomNo, seatNo, reservationDate, startTime, endTime) > 0) {
+            throw new BusinessException("이미 예약된 좌석 또는 시간입니다.");
         }
 
         RoomReservationVO reservation = new RoomReservationVO();
         reservation.setRoomNo(roomNo);
+        reservation.setSeatNo(seatNo);
+        if (selectedSeat != null) {
+            reservation.setSeatCode(selectedSeat.getSeatCode());
+            reservation.setRowLabel(selectedSeat.getRowLabel());
+            reservation.setColNo(selectedSeat.getColNo());
+        }
         reservation.setRoomName(room.getRoomName());
         reservation.setLocation(room.getLocation());
         reservation.setUserNo(userNo);
@@ -115,7 +138,9 @@ public class RoomServiceImpl implements RoomService {
         reservation.setEndTime(endTime);
         reservation.setStatus("RESERVED");
         roomDao.insertReservation(reservation);
-        notificationService.createNotification(userNo, "공간 예약 완료", room.getRoomName() + " 예약이 확정되었습니다.");
+
+        String seatLabel = selectedSeat == null ? "" : " " + selectedSeat.getSeatCode() + " 좌석";
+        notificationService.createNotification(userNo, "공간 예약 완료", room.getRoomName() + seatLabel + " 예약이 확정되었습니다.");
         return reservation;
     }
 
@@ -146,5 +171,33 @@ public class RoomServiceImpl implements RoomService {
     public List<RoomReservationVO> getAllReservations() {
         roomDao.completeExpiredReservations();
         return roomDao.selectAllReservations();
+    }
+
+    private void validateReservationTime(LocalDate reservationDate, LocalTime startTime, LocalTime endTime) {
+        if (!startTime.isBefore(endTime)) {
+            throw new BusinessException("종료 시간은 시작 시간보다 늦어야 합니다.");
+        }
+        if (reservationDate.isBefore(LocalDate.now())
+                || (reservationDate.isEqual(LocalDate.now()) && !startTime.isAfter(LocalTime.now()))) {
+            throw new BusinessException("지난 시간은 예약할 수 없습니다.");
+        }
+    }
+
+    private RoomSeatVO resolveSeat(Long roomNo, Long seatNo) {
+        List<RoomSeatVO> seats = roomDao.selectSeats(roomNo);
+        if (seats.isEmpty()) {
+            return null;
+        }
+        if (seatNo == null) {
+            throw new BusinessException("좌석을 선택해 주세요.");
+        }
+        RoomSeatVO seat = roomDao.selectSeat(seatNo);
+        if (seat == null || !roomNo.equals(seat.getRoomNo())) {
+            throw new BusinessException("선택한 좌석을 찾을 수 없습니다.", 404);
+        }
+        if (!"AVAILABLE".equals(seat.getStatus())) {
+            throw new BusinessException("사용할 수 없는 좌석입니다.");
+        }
+        return seat;
     }
 }
