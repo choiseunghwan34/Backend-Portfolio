@@ -57,6 +57,11 @@ supabase:
   service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
   storage-bucket: ${SUPABASE_STORAGE_BUCKET:campusops-files}
 
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-1.5-flash}
+  requests-per-minute: ${GEMINI_REQUESTS_PER_MINUTE:12}
+
 server:
   port: 8080
 

@@ -466,6 +466,215 @@ select:focus-visible {
   background: #fff;
 }
 
+.chat-widget {
+  position: fixed;
+  right: 1.35rem;
+  bottom: 1.35rem;
+  z-index: 40;
+  display: grid;
+  justify-items: end;
+  gap: 0.8rem;
+  pointer-events: none;
+}
+
+.chat-panel,
+.chat-fab {
+  pointer-events: auto;
+}
+
+.chat-fab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 52px;
+  padding: 0 1rem 0 0.72rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #08233f, #1f5f99);
+  color: #fff;
+  box-shadow: 0 16px 34px rgba(8, 35, 63, 0.24);
+  transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+}
+
+.chat-fab:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+  box-shadow: 0 20px 42px rgba(8, 35, 63, 0.3);
+}
+
+.chat-fab span {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.chat-fab strong {
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.chat-panel {
+  width: min(390px, calc(100vw - 2rem));
+  overflow: hidden;
+  border: 1px solid rgba(220, 231, 242, 0.95);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 24px 58px rgba(15, 47, 87, 0.18);
+  animation: chatRise 0.2s ease both;
+}
+
+.chat-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.15rem;
+  background: linear-gradient(135deg, #08233f, #123b63);
+  color: #fff;
+}
+
+.chat-panel__head span {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #8ed0ff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.chat-panel__head strong {
+  display: block;
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+}
+
+.chat-panel__head button {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.chat-panel__body {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  height: 330px;
+  padding: 1rem;
+  overflow-y: auto;
+  background: #f7fafd;
+}
+
+.chat-message {
+  max-width: 86%;
+  padding: 0.72rem 0.84rem;
+  border-radius: 16px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.chat-message--assistant {
+  justify-self: start;
+  border: 1px solid #dce7f2;
+  background: #fff;
+  color: #223650;
+}
+
+.chat-message--user {
+  justify-self: end;
+  background: #123b63;
+  color: #fff;
+}
+
+.chat-panel__starters {
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.75rem 0.85rem 0;
+  overflow-x: auto;
+  background: #fff;
+  scrollbar-width: none;
+}
+
+.chat-panel__starters::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-panel__starters button {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.68rem;
+  border: 1px solid #dce7f2;
+  border-radius: 999px;
+  background: #f8fbff;
+  color: var(--primary);
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.chat-panel__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  background: #fff;
+}
+
+.chat-panel__form input {
+  min-height: 44px;
+  border: 1px solid #dce7f2;
+  border-radius: 14px;
+  padding: 0 0.85rem;
+  color: var(--text);
+  background: #fff;
+}
+
+.chat-panel__form button {
+  min-width: 64px;
+  border: 0;
+  border-radius: 14px;
+  background: #123b63;
+  color: #fff;
+  font-weight: 900;
+}
+
+.chat-panel__form button:disabled,
+.chat-panel__starters button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@keyframes chatRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .chat-widget {
+    right: 0.8rem;
+    bottom: 0.8rem;
+  }
+
+  .chat-panel__body {
+    height: 300px;
+  }
+}
+
 .text-button {
   border: 0;
   background: transparent;
