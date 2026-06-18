@@ -48,6 +48,38 @@
         WHERE room_no = #{roomNo}
     </update>
 
+    <delete id="deleteUnusedSeatsByRoom">
+        DELETE FROM room_seat rs
+        WHERE rs.room_no = #{roomNo}
+          AND NOT EXISTS (
+              SELECT 1
+              FROM room_reservation rr
+              WHERE rr.seat_no = rs.seat_no
+          )
+    </delete>
+
+    <insert id="generateSeats">
+        INSERT INTO room_seat (room_no, seat_code, row_label, col_no, status)
+        SELECT
+            #{roomNo},
+            source.row_label || source.col_no,
+            source.row_label,
+            source.col_no,
+            'AVAILABLE'
+        FROM (
+            SELECT
+                chr(65 + ((series.n - 1) / #{seatsPerRow})::int) AS row_label,
+                (((series.n - 1) % #{seatsPerRow}) + 1) AS col_no
+            FROM generate_series(1, #{capacity}) AS series(n)
+        ) source
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM room_seat rs
+            WHERE rs.room_no = #{roomNo}
+              AND rs.seat_code = source.row_label || source.col_no
+        )
+    </insert>
+
     <select id="selectSeats" resultType="com.campusops.vo.RoomSeatVO">
         SELECT <include refid="seatColumns" />
         FROM room_seat

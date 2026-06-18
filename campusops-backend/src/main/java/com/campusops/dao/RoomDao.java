@@ -7,8 +7,6 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
-import java.util.Map;
-
 @Mapper
 public interface RoomDao {
     List<RoomVO> selectRooms();
@@ -16,6 +14,10 @@ public interface RoomDao {
     int insertRoom(RoomVO roomVO);
     int updateRoom(RoomVO roomVO);
     int disableRoom(@Param("roomNo") Long roomNo);
+    int deleteUnusedSeatsByRoom(@Param("roomNo") Long roomNo);
+    int generateSeats(@Param("roomNo") Long roomNo,
+                      @Param("capacity") Integer capacity,
+                      @Param("seatsPerRow") Integer seatsPerRow);
     List<RoomSeatVO> selectSeats(@Param("roomNo") Long roomNo);
     RoomSeatVO selectSeat(@Param("seatNo") Long seatNo);
     List<RoomSeatVO> selectSeatStatus(@Param("roomNo") Long roomNo,

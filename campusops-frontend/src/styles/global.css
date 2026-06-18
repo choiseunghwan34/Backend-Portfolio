@@ -701,33 +701,89 @@ select:focus-visible {
   font-weight: 800;
 }
 
+.seat-map-head__meta {
+  display: grid;
+  justify-items: end;
+  gap: 0.25rem;
+  color: #6b7a90;
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.seat-map-head__meta span {
+  padding: 0.35rem 0.62rem;
+  border: 1px solid #dce7f2;
+  border-radius: 999px;
+  background: #f6faff;
+  color: #123b63;
+}
+
+.seat-map-head__meta em {
+  color: #6b7a90;
+  font-style: normal;
+}
+
 .seat-map {
   display: grid;
-  gap: 0.8rem;
+  min-height: 320px;
+  gap: 0.9rem;
   padding: 1rem;
   border-radius: 18px;
-  background: linear-gradient(180deg, #f8fbff, #eef6ff);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.62), rgba(234,243,251,0.88)),
+    repeating-linear-gradient(90deg, rgba(18,59,99,0.025) 0 1px, transparent 1px 58px);
   border: 1px solid #e1ebf5;
+}
+
+.seat-room {
+  position: relative;
+  display: grid;
+  gap: 0.85rem;
+  width: 100%;
 }
 
 .seat-stage {
   display: grid;
   place-items: center;
-  min-height: 42px;
-  margin-bottom: 0.35rem;
-  border-radius: 999px;
+  min-height: 46px;
+  border-radius: 18px;
   background: linear-gradient(135deg, #08233f, #1f5f99);
   color: #fff;
   font-size: 0.76rem;
   font-weight: 900;
   letter-spacing: 0.08em;
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14), 0 10px 24px rgba(8,35,63,0.14);
+}
+
+.lecture-door,
+.meeting-screen,
+.study-room-label {
+  justify-self: end;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #dce7f2;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.82);
+  color: #6b7a90;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.lecture-seat-area {
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.45rem 0.2rem 0.1rem;
 }
 
 .seat-row {
   display: grid;
-  grid-template-columns: 2.4rem minmax(0, 1fr);
+  grid-template-columns: 2.1rem minmax(0, 1fr);
   gap: 0.65rem;
   align-items: center;
+}
+
+.seat-row--lecture {
+  grid-template-columns: 2.1rem minmax(0, 1fr) 2.8rem minmax(0, 1fr);
 }
 
 .seat-row-label {
@@ -737,10 +793,22 @@ select:focus-visible {
   text-align: center;
 }
 
+.lecture-block,
 .seat-row-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
   gap: 0.5rem;
+}
+
+.seat-aisle {
+  display: grid;
+  min-height: 34px;
+  place-items: center;
+  border-inline: 1px dashed rgba(18,59,99,0.17);
+  color: #8ca0b5;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  writing-mode: vertical-rl;
 }
 
 .seat-button {
@@ -784,6 +852,82 @@ select:focus-visible {
   box-shadow: none;
 }
 
+.seat-room--meeting,
+.seat-room--study {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.meeting-screen {
+  justify-self: center;
+  width: min(440px, 100%);
+  text-align: center;
+}
+
+.meeting-layout,
+.study-table-layout {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.3rem 0;
+}
+
+.meeting-seats,
+.study-seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+  gap: 0.55rem;
+}
+
+.meeting-table,
+.study-table {
+  display: grid;
+  min-height: 92px;
+  place-items: center;
+  padding: 1rem;
+  border: 1px solid rgba(18,59,99,0.16);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(18,59,99,0.96), rgba(31,95,153,0.88)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 38px);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 14px 28px rgba(8,35,63,0.14);
+}
+
+.meeting-table strong,
+.study-table strong {
+  font-size: 0.9rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.meeting-table span,
+.study-table span {
+  color: rgba(255,255,255,0.74);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.seat-room--study {
+  max-width: 520px;
+}
+
+.study-room-label {
+  justify-self: center;
+}
+
+.study-table-layout {
+  padding: 0.35rem 0.2rem;
+}
+
+.study-seats {
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+}
+
+.study-table {
+  min-height: 118px;
+  border-radius: 24px;
+}
+
 @media (max-width: 980px) {
   .seat-reservation-layout {
     grid-template-columns: 1fr;
@@ -802,8 +946,41 @@ select:focus-visible {
     grid-template-columns: 1.6rem minmax(0, 1fr);
   }
 
-  .seat-row-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .seat-row--lecture {
+    grid-template-columns: 1.4rem minmax(0, 1fr);
+  }
+
+  .seat-row--lecture .seat-aisle,
+  .seat-row--lecture .lecture-block:empty {
+    display: none;
+  }
+
+  .seat-row--lecture .lecture-block {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .seat-map {
+    min-height: 260px;
+    padding: 0.85rem;
+  }
+
+  .seat-map-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .seat-map-head__meta {
+    justify-items: start;
+  }
+
+  .meeting-seats,
+  .study-seats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .meeting-table,
+  .study-table {
+    min-height: 84px;
   }
 }
 

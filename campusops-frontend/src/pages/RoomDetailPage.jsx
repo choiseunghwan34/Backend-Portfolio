@@ -27,6 +27,29 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function getLayoutType(roomName = '') {
+  if (roomName.includes('회의실')) return 'meeting';
+  if (roomName.includes('스터디룸')) return 'study';
+  if (roomName.includes('세미나')) return 'seminar';
+  return 'lecture';
+}
+
+function sortSeats(seats = []) {
+  return [...seats].sort((a, b) => {
+    const rowCompare = String(a.rowLabel || '').localeCompare(String(b.rowLabel || ''), 'ko');
+    if (rowCompare !== 0) return rowCompare;
+    return Number(a.colNo || 0) - Number(b.colNo || 0);
+  });
+}
+
+function buildSeatRows(seats = []) {
+  return sortSeats(seats).reduce((acc, seat) => {
+    const row = seat.rowLabel || String(seat.seatCode || '').replace(/\d+/g, '') || '좌석';
+    acc[row] = [...(acc[row] || []), seat];
+    return acc;
+  }, {});
+}
+
 export default function RoomDetailPage() {
   const { roomNo } = useParams();
   const [room, setRoom] = useState(null);
@@ -69,16 +92,117 @@ export default function RoomDetailPage() {
   useEffect(() => { loadBase(); }, [roomNo]);
   useEffect(() => { loadSeatStatus(); }, [roomNo, form.reservationDate, form.startTime, form.endTime]);
 
-  const groupedSeats = useMemo(() => {
-    return seats.reduce((acc, seat) => {
-      const row = seat.rowLabel || String(seat.seatCode || '').replace(/\d+/g, '') || '좌석';
-      acc[row] = [...(acc[row] || []), seat];
-      return acc;
-    }, {});
-  }, [seats]);
-
+  const seatRows = useMemo(() => buildSeatRows(seats), [seats]);
+  const layoutType = useMemo(() => getLayoutType(room?.roomName || ''), [room]);
   const selectedSeat = seats.find((seat) => String(seat.seatNo) === String(selectedSeatNo));
   const statusText = roomStatusText[room?.status] || room?.status || '확인 필요';
+
+  const renderSeatButton = (seat) => {
+    const reserved = Boolean(seat.reserved);
+    const disabled = seat.status !== 'AVAILABLE';
+    const selected = String(selectedSeatNo) === String(seat.seatNo);
+
+    return (
+      <button
+        type="button"
+        key={seat.seatNo}
+        className={`seat-button ${selected ? 'is-selected' : ''} ${reserved ? 'is-reserved' : ''} ${disabled ? 'is-disabled' : ''}`}
+        disabled={reserved || disabled || room.status !== 'AVAILABLE'}
+        onClick={() => setSelectedSeatNo(String(seat.seatNo))}
+        aria-pressed={selected}
+      >
+        {seat.seatCode}
+      </button>
+    );
+  };
+
+  const renderLectureMap = () => {
+    const rows = Object.entries(seatRows);
+    const maxCols = Math.max(...rows.flatMap(([, rowSeats]) => rowSeats.map((seat) => Number(seat.colNo || 0))), 1);
+    const leftCols = Math.ceil(maxCols / 2);
+    const rightCols = Math.max(maxCols - leftCols, 0);
+
+    return (
+      <div className="seat-room seat-room--lecture">
+        <div className="seat-stage">FRONT / BOARD</div>
+        <div className="lecture-door">출입구</div>
+        <div className="lecture-seat-area">
+          {rows.map(([row, rowSeats]) => {
+            const leftSeats = rowSeats.filter((seat) => Number(seat.colNo || 0) <= leftCols);
+            const rightSeats = rowSeats.filter((seat) => Number(seat.colNo || 0) > leftCols);
+            return (
+              <div className="seat-row seat-row--lecture" key={row}>
+                <span className="seat-row-label">{row}</span>
+                <div className="lecture-block" style={{ gridTemplateColumns: `repeat(${leftCols}, minmax(44px, 1fr))` }}>
+                  {leftSeats.map(renderSeatButton)}
+                </div>
+                <span className="seat-aisle">통로</span>
+                <div className="lecture-block" style={{ gridTemplateColumns: `repeat(${Math.max(rightCols, 1)}, minmax(44px, 1fr))` }}>
+                  {rightSeats.map(renderSeatButton)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderMeetingMap = () => {
+    const allSeats = sortSeats(seats);
+    const half = Math.ceil(allSeats.length / 2);
+    const topSeats = allSeats.slice(0, half);
+    const bottomSeats = allSeats.slice(half);
+
+    return (
+      <div className="seat-room seat-room--meeting">
+        <div className="meeting-screen">PRESENTATION WALL</div>
+        <div className="meeting-layout">
+          <div className="meeting-seats meeting-seats--top">
+            {topSeats.map(renderSeatButton)}
+          </div>
+          <div className="meeting-table">
+            <strong>CONFERENCE TABLE</strong>
+            <span>{room.roomName}</span>
+          </div>
+          <div className="meeting-seats meeting-seats--bottom">
+            {bottomSeats.map(renderSeatButton)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderStudyMap = () => {
+    const allSeats = sortSeats(seats);
+    const half = Math.ceil(allSeats.length / 2);
+    const topSeats = allSeats.slice(0, half);
+    const bottomSeats = allSeats.slice(half);
+
+    return (
+      <div className="seat-room seat-room--study">
+        <div className="study-room-label">QUIET STUDY ZONE</div>
+        <div className="study-table-layout">
+          <div className="study-seats">{topSeats.map(renderSeatButton)}</div>
+          <div className="study-table">
+            <strong>GROUP TABLE</strong>
+            <span>콘센트 · 조명 · 화이트보드</span>
+          </div>
+          <div className="study-seats">{bottomSeats.map(renderSeatButton)}</div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSeatMap = () => {
+    if (!seats.length) {
+      return <div className="workspace-empty">등록된 좌석이 없습니다. 이 공간은 시간 단위 전체 예약으로 이용합니다.</div>;
+    }
+
+    if (layoutType === 'meeting') return renderMeetingMap();
+    if (layoutType === 'study') return renderStudyMap();
+    return renderLectureMap();
+  };
 
   const reserve = async (event) => {
     event.preventDefault();
@@ -180,39 +304,15 @@ export default function RoomDetailPage() {
                 <span className="workspace-label">SEAT MAP</span>
                 <h2>좌석 선택</h2>
               </div>
-              {seatLoading ? <span className="seat-map-loading">좌석 현황 갱신 중...</span> : null}
+              <div className="seat-map-head__meta">
+                <span>{layoutType === 'meeting' ? '회의실형' : layoutType === 'study' ? '스터디룸형' : '강의실형'}</span>
+                {seatLoading ? <em>좌석 현황 갱신 중...</em> : null}
+              </div>
             </div>
 
-            {seats.length ? (
-              <div className="seat-map">
-                <div className="seat-stage">FRONT / BOARD</div>
-                {Object.entries(groupedSeats).map(([row, rowSeats]) => (
-                  <div className="seat-row" key={row}>
-                    <span className="seat-row-label">{row}</span>
-                    <div className="seat-row-grid">
-                      {rowSeats.map((seat) => {
-                        const reserved = Boolean(seat.reserved);
-                        const disabled = seat.status !== 'AVAILABLE';
-                        const selected = String(selectedSeatNo) === String(seat.seatNo);
-                        return (
-                          <button
-                            type="button"
-                            key={seat.seatNo}
-                            className={`seat-button ${selected ? 'is-selected' : ''} ${reserved ? 'is-reserved' : ''} ${disabled ? 'is-disabled' : ''}`}
-                            disabled={reserved || disabled || room.status !== 'AVAILABLE'}
-                            onClick={() => setSelectedSeatNo(String(seat.seatNo))}
-                          >
-                            {seat.seatCode}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="workspace-empty">등록된 좌석이 없습니다. 이 공간은 시간 단위 전체 예약으로 이용됩니다.</div>
-            )}
+            <div className="seat-map">
+              {renderSeatMap()}
+            </div>
           </section>
         </div>
 

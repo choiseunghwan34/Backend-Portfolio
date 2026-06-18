@@ -14,6 +14,7 @@ import com.campusops.vo.RoomVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -23,6 +24,11 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class RoomServiceImpl implements RoomService {
+    private static final int DEFAULT_SEATS_PER_ROW = 10;
+    private static final int SEMINAR_SEATS_PER_ROW = 8;
+    private static final int MEETING_SEATS_PER_ROW = 6;
+    private static final int STUDY_SEATS_PER_ROW = 4;
+
     private final RoomDao roomDao;
     private final RedisTemplate<String, Object> redisTemplate;
     private final NotificationService notificationService;
@@ -67,24 +73,28 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @Transactional
     public RoomVO createRoom(RoomRequestDTO request) {
         RoomVO room = new RoomVO();
         room.setRoomName(request.getRoomName());
         room.setLocation(request.getLocation());
-        room.setCapacity(request.getCapacity());
+        room.setCapacity(normalizeCapacity(request.getCapacity()));
         room.setStatus("AVAILABLE");
         roomDao.insertRoom(room);
-        return room;
+        refreshSeatLayout(room);
+        return getRoom(room.getRoomNo());
     }
 
     @Override
+    @Transactional
     public RoomVO updateRoom(Long roomNo, RoomRequestDTO request) {
         RoomVO room = getRoom(roomNo);
         room.setRoomName(request.getRoomName());
         room.setLocation(request.getLocation());
-        room.setCapacity(request.getCapacity());
+        room.setCapacity(normalizeCapacity(request.getCapacity()));
         roomDao.updateRoom(room);
-        return room;
+        refreshSeatLayout(room);
+        return getRoom(roomNo);
     }
 
     @Override
@@ -113,7 +123,7 @@ public class RoomServiceImpl implements RoomService {
                 ? RedisKeys.reservationHold(roomNo, request.getReservationDate(), request.getStartTime())
                 : RedisKeys.reservationSeatHold(roomNo, request.getReservationDate(), request.getStartTime(), selectedSeat.getSeatNo());
         if (Boolean.TRUE.equals(redisTemplate.hasKey(holdKey))) {
-            throw new BusinessException("이미 예약 신청이 진행 중인 좌석 또는 시간입니다.", 429);
+            throw new BusinessException("이미 예약 요청이 진행 중인 좌석 또는 시간입니다.", 429);
         }
         redisTemplate.opsForValue().set(holdKey, "1", Duration.ofMinutes(5));
 
@@ -199,5 +209,34 @@ public class RoomServiceImpl implements RoomService {
             throw new BusinessException("사용할 수 없는 좌석입니다.");
         }
         return seat;
+    }
+
+    private void refreshSeatLayout(RoomVO room) {
+        if (room.getRoomNo() == null || room.getCapacity() == null || room.getCapacity() <= 0) {
+            return;
+        }
+        roomDao.deleteUnusedSeatsByRoom(room.getRoomNo());
+        roomDao.generateSeats(room.getRoomNo(), room.getCapacity(), seatsPerRow(room.getRoomName()));
+    }
+
+    private Integer normalizeCapacity(Integer capacity) {
+        if (capacity == null || capacity < 1) {
+            return 1;
+        }
+        return capacity;
+    }
+
+    private Integer seatsPerRow(String roomName) {
+        String name = roomName == null ? "" : roomName;
+        if (name.contains("스터디룸")) {
+            return STUDY_SEATS_PER_ROW;
+        }
+        if (name.contains("회의실")) {
+            return MEETING_SEATS_PER_ROW;
+        }
+        if (name.contains("세미나")) {
+            return SEMINAR_SEATS_PER_ROW;
+        }
+        return DEFAULT_SEATS_PER_ROW;
     }
 }
