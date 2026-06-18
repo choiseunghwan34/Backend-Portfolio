@@ -29,6 +29,6 @@ public class NoticeController {
 
     @GetMapping("/{noticeNo}")
     public ApiResponse<?> detail(@PathVariable Long noticeNo) {
-        return ApiResponse.success("공지사항 상세 조회 성공", noticeService.getNotice(noticeNo));
+        return ApiResponse.success("공지사항 상세 조회 성공", noticeService.getNoticeDetail(noticeNo));
     }
 }

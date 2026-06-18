@@ -6,6 +6,8 @@ import { SkeletonCard } from '../components/Skeleton';
 export default function NoticeDetailPage() {
   const { noticeNo } = useParams();
   const [notice, setNotice] = useState(null);
+  const [previousNotice, setPreviousNotice] = useState(null);
+  const [nextNotice, setNextNotice] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,7 +16,12 @@ export default function NoticeDetailPage() {
       setLoading(true);
       try {
         const { data } = await noticeApi.detail(noticeNo);
-        if (mounted) setNotice(data.data);
+        if (mounted) {
+          const payload = data.data;
+          setNotice(payload?.notice || payload);
+          setPreviousNotice(payload?.previousNotice || null);
+          setNextNotice(payload?.nextNotice || null);
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -82,7 +89,23 @@ export default function NoticeDetailPage() {
         </dl>
 
         <nav className="notice-document__nav" aria-label="공지 이동">
-          <Link to="/notices" className="notice-document__list">목록으로 돌아가기</Link>
+          {previousNotice ? (
+            <Link to={`/notices/${previousNotice.noticeNo}`} className="notice-nav-link notice-nav-link--prev">
+              <span>이전글</span>
+              <strong>{previousNotice.title}</strong>
+            </Link>
+          ) : (
+            <span className="notice-nav-link notice-nav-link--disabled">이전글 없음</span>
+          )}
+          <Link to="/notices" className="notice-document__list">목록</Link>
+          {nextNotice ? (
+            <Link to={`/notices/${nextNotice.noticeNo}`} className="notice-nav-link notice-nav-link--next">
+              <span>다음글</span>
+              <strong>{nextNotice.title}</strong>
+            </Link>
+          ) : (
+            <span className="notice-nav-link notice-nav-link--disabled notice-nav-link--next">다음글 없음</span>
+          )}
         </nav>
       </article>
     </div>

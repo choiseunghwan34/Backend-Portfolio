@@ -48,6 +48,16 @@ public class NoticeServiceImpl implements NoticeService {
     }
 
     @Override
+    public Map<String, Object> getNoticeDetail(Long noticeNo) {
+        NoticeVO notice = getNotice(noticeNo);
+        Map<String, Object> result = new HashMap<>();
+        result.put("notice", notice);
+        result.put("previousNotice", noticeDao.selectPreviousNotice(noticeNo));
+        result.put("nextNotice", noticeDao.selectNextNotice(noticeNo));
+        return result;
+    }
+
+    @Override
     public NoticeVO createNotice(NoticeRequestDTO request) {
         NoticeVO notice = new NoticeVO();
         notice.setTitle(request.getTitle());
