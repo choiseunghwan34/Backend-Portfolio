@@ -3808,22 +3808,38 @@ select:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding-bottom: 1rem;
+  gap: 1.25rem;
+  padding-bottom: 1.15rem;
   border-bottom: 1px solid #d8e1eb;
 }
 
-.notice-board-toolbar strong {
-  display: block;
-  color: #10233f;
-  font-size: 1.08rem;
+.notice-board-title {
+  display: flex;
+  align-items: center;
+  gap: 0.72rem;
+  min-width: 0;
 }
 
-.notice-board-toolbar span {
-  display: block;
-  margin-top: 0.25rem;
-  color: #6b7a90;
-  font-size: 0.82rem;
+.notice-board-title strong {
+  color: #10233f;
+  font-size: 1.08rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.notice-board-title span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.65rem;
+  padding: 0 0.68rem;
+  border: 1px solid #d8e8f7;
+  border-radius: 999px;
+  background: #f3f8fe;
+  color: #1f5f99;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .notice-board-list {
@@ -6264,6 +6280,10 @@ select:focus-visible {
   .notice-board-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .notice-board-title {
+    justify-content: space-between;
   }
 
   .notice-search {

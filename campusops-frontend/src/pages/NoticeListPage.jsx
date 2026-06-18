@@ -21,7 +21,9 @@ export default function NoticeListPage() {
     }
   };
 
-  useEffect(() => { load(1); }, []);
+  useEffect(() => {
+    load(1);
+  }, []);
 
   const total = Number(pageData.total || pageData.items.length || 0);
   const size = Number(pageData.size || 10);
@@ -46,7 +48,7 @@ export default function NoticeListPage() {
 
       <section className="notice-board-panel">
         <div className="notice-board-toolbar">
-          <div>
+          <div className="notice-board-title">
             <strong>공지 목록</strong>
             <span>총 {total.toLocaleString()}건</span>
           </div>
@@ -57,7 +59,9 @@ export default function NoticeListPage() {
               onKeyDown={(event) => event.key === 'Enter' && load(1)}
               placeholder="검색어 입력"
             />
-            <button className="secondary-button" type="button" onClick={() => load(1)}>검색</button>
+            <button className="secondary-button" type="button" onClick={() => load(1)}>
+              검색
+            </button>
           </div>
         </div>
 
@@ -78,15 +82,23 @@ export default function NoticeListPage() {
               </Link>
             ))}
             {!pageData.items.length ? (
-              <EmptyState eyebrow="NOTICE" title="검색 결과가 없습니다." description="다른 검색어를 입력하거나 전체 공지 목록을 확인해 보세요." />
+              <EmptyState
+                eyebrow="NOTICE"
+                title="검색 결과가 없습니다."
+                description="다른 검색어를 입력하거나 전체 공지 목록을 확인해 보세요."
+              />
             ) : null}
           </div>
         )}
 
         <div className="toolbar pagination-bar">
-          <button className="secondary-button" type="button" disabled={page <= 1 || loading} onClick={() => load(page - 1)}>이전</button>
+          <button className="secondary-button" type="button" disabled={page <= 1 || loading} onClick={() => load(page - 1)}>
+            이전
+          </button>
           <span className="pagination-current">페이지 {page} / {totalPages}</span>
-          <button className="secondary-button" type="button" disabled={!hasNext || loading} onClick={() => load(page + 1)}>다음</button>
+          <button className="secondary-button" type="button" disabled={!hasNext || loading} onClick={() => load(page + 1)}>
+            다음
+          </button>
         </div>
       </section>
     </div>
