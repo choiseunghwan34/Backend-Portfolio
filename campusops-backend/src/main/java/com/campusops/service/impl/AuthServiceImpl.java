@@ -17,10 +17,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
@@ -35,12 +40,14 @@ import java.util.UUID;
 public class AuthServiceImpl implements AuthService {
     private static final Duration EMAIL_TOKEN_TTL = Duration.ofMinutes(10);
     private static final String EMAIL_VERIFIED_VALUE = "VERIFIED";
+    private static final String EMAILJS_SEND_URL = "https://api.emailjs.com/api/v1.0/email/send";
 
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, Object> redisTemplate;
     private final JavaMailSender mailSender;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${jwt.expiration:7200000}")
     private long defaultExpirationMillis;
@@ -62,6 +69,21 @@ public class AuthServiceImpl implements AuthService {
 
     @Value("${spring.mail.host:}")
     private String mailHost;
+
+    @Value("${emailjs.enabled:true}")
+    private boolean emailJsEnabled;
+
+    @Value("${emailjs.service-id:}")
+    private String emailJsServiceId;
+
+    @Value("${emailjs.template-id:}")
+    private String emailJsTemplateId;
+
+    @Value("${emailjs.public-key:}")
+    private String emailJsPublicKey;
+
+    @Value("${emailjs.access-token:}")
+    private String emailJsAccessToken;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -116,7 +138,7 @@ public class AuthServiceImpl implements AuthService {
         String token = UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", "");
         redisTemplate.opsForValue().set(RedisKeys.emailVerification(email), token, EMAIL_TOKEN_TTL);
         String verificationUrl = buildVerificationUrl(email, token);
-        sendMail(email, verificationUrl);
+        sendVerificationMail(email, verificationUrl);
 
         Map<String, Object> data = new HashMap<>();
         data.put("expiresInSeconds", EMAIL_TOKEN_TTL.toSeconds());
@@ -193,12 +215,56 @@ public class AuthServiceImpl implements AuthService {
                 .toUriString();
     }
 
-    private void sendMail(String email, String verificationUrl) {
+    private void sendVerificationMail(String email, String verificationUrl) {
+        if (debugCodeEnabled) {
+            return;
+        }
+        if (emailJsEnabled) {
+            sendWithEmailJs(email, verificationUrl);
+            return;
+        }
+        sendWithSmtp(email, verificationUrl);
+    }
+
+    private void sendWithEmailJs(String email, String verificationUrl) {
+        if (isBlank(emailJsServiceId) || isBlank(emailJsTemplateId) || isBlank(emailJsPublicKey)) {
+            throw new BusinessException("EmailJS 설정이 필요합니다. service id, template id, public key를 확인해 주세요.", 500);
+        }
+
+        Map<String, Object> templateParams = new HashMap<>();
+        templateParams.put("to_email", email);
+        templateParams.put("to_name", email);
+        templateParams.put("from_name", mailFromName);
+        templateParams.put("app_name", "CampusOps");
+        templateParams.put("verification_url", verificationUrl);
+        templateParams.put("expire_minutes", EMAIL_TOKEN_TTL.toMinutes());
+        templateParams.put("support_email", resolveSenderSafely());
+        templateParams.put("subject", "[CampusOps] 이메일 인증 요청");
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("service_id", emailJsServiceId);
+        body.put("template_id", emailJsTemplateId);
+        body.put("user_id", emailJsPublicKey);
+        body.put("template_params", templateParams);
+        if (!isBlank(emailJsAccessToken)) {
+            body.put("accessToken", emailJsAccessToken);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        try {
+            restTemplate.postForEntity(EMAILJS_SEND_URL, new HttpEntity<>(body, headers), String.class);
+        } catch (RestClientException exception) {
+            log.warn("Failed to send CampusOps verification mail through EmailJS. to={}, serviceId={}, templateId={}",
+                    email, emailJsServiceId, emailJsTemplateId, exception);
+            throw new BusinessException("인증 메일 발송에 실패했습니다. EmailJS 설정을 확인해 주세요.", 500);
+        }
+    }
+
+    private void sendWithSmtp(String email, String verificationUrl) {
         if (mailHost == null || mailHost.isBlank()) {
-            if (debugCodeEnabled) {
-                return;
-            }
-            throw new BusinessException("메일 서버 설정이 필요합니다.");
+            throw new BusinessException("메일 서버 설정이 필요합니다.", 500);
         }
 
         try {
@@ -211,8 +277,9 @@ public class AuthServiceImpl implements AuthService {
             helper.setText(buildVerificationMailText(verificationUrl), false);
             mailSender.send(message);
         } catch (Exception exception) {
-            log.warn("Failed to send CampusOps verification mail. to={}, from={}, host={}", email, resolveSenderSafely(), mailHost, exception);
-            throw new BusinessException("인증 메일 발송에 실패했습니다. SMTP 계정과 앱 비밀번호를 확인해 주세요.", 500);
+            log.warn("Failed to send CampusOps verification mail through SMTP. to={}, from={}, host={}",
+                    email, resolveSenderSafely(), mailHost, exception);
+            throw new BusinessException("인증 메일 발송에 실패했습니다. SMTP 설정을 확인해 주세요.", 500);
         }
     }
 
@@ -231,7 +298,7 @@ public class AuthServiceImpl implements AuthService {
         if (mailUsername != null && !mailUsername.isBlank()) {
             return mailUsername;
         }
-        throw new BusinessException("메일 발신자 설정이 필요합니다.", 500);
+        return "no-reply@campusops.local";
     }
 
     private String buildVerificationMailText(String verificationUrl) {
@@ -242,6 +309,10 @@ public class AuthServiceImpl implements AuthService {
 
     private String normalizeEmail(String email) {
         return email == null ? "" : email.trim().toLowerCase();
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private void cacheActiveToken(UserVO user, String token, long expirationMillis) {

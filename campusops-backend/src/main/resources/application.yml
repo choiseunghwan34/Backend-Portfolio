@@ -42,6 +42,13 @@ mail:
   from-name: ${MAIL_FROM_NAME:CampusOps}
   debug-code-enabled: ${MAIL_DEBUG_CODE_ENABLED:false}
 
+emailjs:
+  enabled: ${EMAILJS_ENABLED:true}
+  service-id: ${EMAILJS_SERVICE_ID:service_gf1ay9g}
+  template-id: ${EMAILJS_TEMPLATE_ID:}
+  public-key: ${EMAILJS_PUBLIC_KEY:}
+  access-token: ${EMAILJS_ACCESS_TOKEN:}
+
 app:
   frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
 
