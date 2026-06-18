@@ -37,7 +37,7 @@ export default function NoticeDetailPage() {
   if (!notice) {
     return (
       <div className="notice-board-page">
-        <section className="notice-document">
+        <section className="notice-document notice-document--empty">
           <h2>공지사항을 찾을 수 없습니다.</h2>
           <Link to="/notices" className="primary-button">목록으로</Link>
         </section>
@@ -82,9 +82,9 @@ export default function NoticeDetailPage() {
         </dl>
 
         <nav className="notice-document__nav" aria-label="공지 이동">
-          <button type="button" className="notice-circle" disabled>이전</button>
+          <button type="button" className="notice-circle" disabled>이전글</button>
           <Link to="/notices" className="notice-document__list">목록</Link>
-          <button type="button" className="notice-circle" disabled>다음</button>
+          <button type="button" className="notice-circle" disabled>다음글</button>
         </nav>
       </article>
     </div>
