@@ -3801,7 +3801,7 @@ select:focus-visible {
 }
 
 .notice-board-panel {
-  padding-top: 1.2rem;
+  padding-top: 0;
 }
 
 .notice-board-toolbar {
@@ -3809,7 +3809,7 @@ select:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 1.25rem;
-  padding-bottom: 1.15rem;
+  padding: 1.3rem 1.45rem 1.15rem;
   border-bottom: 1px solid #d8e1eb;
 }
 
@@ -3852,7 +3852,7 @@ select:focus-visible {
   align-items: center;
   gap: 1rem;
   min-height: 76px;
-  padding: 1rem 0.85rem;
+  padding: 1rem 1.45rem;
   border-bottom: 1px solid #edf2f7;
   transition: background-color var(--transition);
 }
@@ -4039,6 +4039,10 @@ select:focus-visible {
   color: #123b63;
   font-size: 0.84rem;
   font-weight: 850;
+}
+
+.notice-board-panel .pagination-bar {
+  padding: 1.1rem 1.45rem 0;
 }
 
 .service-page {
