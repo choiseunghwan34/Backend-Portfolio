@@ -27,8 +27,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +39,11 @@ public class ChatServiceImpl implements ChatService {
     private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent";
     private static final int MAX_HISTORY = 8;
     private static final int MAX_MESSAGE_LENGTH = 600;
+    private static final List<String> FALLBACK_MODELS = List.of(
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-flash-latest"
+    );
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -44,7 +51,7 @@ public class ChatServiceImpl implements ChatService {
     @Value("${gemini.api-key:}")
     private String apiKey;
 
-    @Value("${gemini.model:gemini-flash-latest}")
+    @Value("${gemini.model:gemini-2.5-flash}")
     private String model;
 
     @Value("${gemini.requests-per-minute:12}")
@@ -68,32 +75,74 @@ public class ChatServiceImpl implements ChatService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        String resolvedModel = model == null ? "gemini-flash-latest" : model.trim();
+        HttpStatusCodeException lastGeminiException = null;
+        RestClientException lastClientException = null;
+        for (String candidateModel : candidateModels()) {
+            try {
+                ChatResponseDTO response = requestGemini(candidateModel, body, headers);
+                if (!candidateModel.equals(resolvePrimaryModel())) {
+                    log.info("Gemini fallback succeeded. primaryModel={}, fallbackModel={}", resolvePrimaryModel(), candidateModel);
+                }
+                return response;
+            } catch (HttpStatusCodeException exception) {
+                lastGeminiException = exception;
+                log.warn("Gemini API returned error. status={}, model={}, body={}",
+                        exception.getStatusCode(), candidateModel, exception.getResponseBodyAsString());
+                if (!isRetryableGeminiError(exception)) {
+                    throw new BusinessException(toFriendlyGeminiMessage(exception), 502);
+                }
+            } catch (RestClientException exception) {
+                lastClientException = exception;
+                log.warn("Gemini API request failed. model={}", candidateModel, exception);
+            }
+        }
+
+        if (lastGeminiException != null) {
+            throw new BusinessException(toFriendlyGeminiMessage(lastGeminiException), 502);
+        }
+        if (lastClientException != null) {
+            throw new BusinessException("AI 서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.", 502);
+        }
+        throw new BusinessException("AI 답변을 생성하지 못했습니다.", 502);
+    }
+
+    private ChatResponseDTO requestGemini(String candidateModel, Map<String, Object> body, HttpHeaders headers) {
         String url = UriComponentsBuilder
                 .fromHttpUrl(GEMINI_URL)
                 .queryParam("key", apiKey.trim())
-                .buildAndExpand(resolvedModel)
+                .buildAndExpand(candidateModel)
                 .toUriString();
 
-        try {
-            JsonNode response = restTemplate.postForObject(url, new HttpEntity<>(body, headers), JsonNode.class);
-            String answer = response
-                    .path("candidates").path(0)
-                    .path("content").path("parts").path(0)
-                    .path("text").asText("");
-            if (!StringUtils.hasText(answer)) {
-                log.warn("Gemini returned empty answer. model={}, response={}", resolvedModel, response);
-                throw new BusinessException("AI 답변을 생성하지 못했습니다.", 502);
-            }
-            return new ChatResponseDTO(answer.trim());
-        } catch (HttpStatusCodeException exception) {
-            log.warn("Gemini API returned error. status={}, model={}, body={}",
-                    exception.getStatusCode(), resolvedModel, exception.getResponseBodyAsString());
-            throw new BusinessException(toFriendlyGeminiMessage(exception), 502);
-        } catch (RestClientException exception) {
-            log.warn("Gemini API request failed. model={}", resolvedModel, exception);
-            throw new BusinessException("AI 서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.", 502);
+        JsonNode response = restTemplate.postForObject(url, new HttpEntity<>(body, headers), JsonNode.class);
+        String answer = response
+                .path("candidates").path(0)
+                .path("content").path("parts").path(0)
+                .path("text").asText("");
+        if (!StringUtils.hasText(answer)) {
+            log.warn("Gemini returned empty answer. model={}, response={}", candidateModel, response);
+            throw new BusinessException("AI 답변을 생성하지 못했습니다.", 502);
         }
+        return new ChatResponseDTO(answer.trim());
+    }
+
+    private Set<String> candidateModels() {
+        Set<String> models = new LinkedHashSet<>();
+        models.add(resolvePrimaryModel());
+        models.addAll(FALLBACK_MODELS);
+        return models;
+    }
+
+    private String resolvePrimaryModel() {
+        return StringUtils.hasText(model) ? model.trim() : "gemini-2.5-flash";
+    }
+
+    private boolean isRetryableGeminiError(HttpStatusCodeException exception) {
+        int status = exception.getStatusCode().value();
+        String body = exception.getResponseBodyAsString();
+        return status == 429
+                || status == 503
+                || status == 504
+                || (status == 404 && body != null && body.toLowerCase().contains("not found"));
     }
 
     private List<Map<String, Object>> buildContents(List<ChatMessageDTO> history, String message) {
@@ -154,8 +203,8 @@ public class ChatServiceImpl implements ChatService {
     private String toFriendlyGeminiMessage(HttpStatusCodeException exception) {
         int status = exception.getStatusCode().value();
         String body = exception.getResponseBodyAsString();
-        if (status == 400 && body != null && body.contains("not found")) {
-            return "Gemini 모델명을 찾을 수 없습니다. Render의 GEMINI_MODEL 값을 gemini-flash-latest 또는 gemini-2.5-flash로 바꿔 주세요.";
+        if (status == 400 && body != null && body.toLowerCase().contains("not found")) {
+            return "Gemini 모델명을 찾을 수 없습니다. Render의 GEMINI_MODEL 값을 gemini-2.5-flash 또는 gemini-2.0-flash로 바꿔 주세요.";
         }
         if (status == 400) {
             return "Gemini 요청 형식이 올바르지 않습니다. Render 로그의 Gemini API 오류 내용을 확인해 주세요.";
@@ -165,6 +214,9 @@ public class ChatServiceImpl implements ChatService {
         }
         if (status == 429) {
             return "Gemini 무료 사용량 또는 요청 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.";
+        }
+        if (status == 503 || status == 504) {
+            return "Gemini 모델 사용량이 많아 잠시 응답하지 못했습니다. 잠시 후 다시 시도해 주세요.";
         }
         return "AI 서버 호출에 실패했습니다. Render 로그에서 Gemini API 오류 내용을 확인해 주세요.";
     }
