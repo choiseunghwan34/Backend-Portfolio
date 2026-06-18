@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_pw VARCHAR(255) NOT NULL,
     user_name VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
+    profile_image_url TEXT,
     role VARCHAR(20) DEFAULT 'USER',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

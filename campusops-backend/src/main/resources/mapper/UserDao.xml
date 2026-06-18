@@ -9,22 +9,35 @@
     </insert>
 
     <select id="selectByUserId" resultType="com.campusops.vo.UserVO">
-        SELECT user_no, user_id, user_pw, user_name, email, role, created_at
+        SELECT user_no, user_id, user_pw, user_name, email, profile_image_url, role, created_at
         FROM users
         WHERE user_id = #{userId}
     </select>
 
     <select id="selectByEmail" resultType="com.campusops.vo.UserVO">
-        SELECT user_no, user_id, user_pw, user_name, email, role, created_at
+        SELECT user_no, user_id, user_pw, user_name, email, profile_image_url, role, created_at
         FROM users
         WHERE email = #{email}
     </select>
 
     <select id="selectByUserNo" resultType="com.campusops.vo.UserVO">
-        SELECT user_no, user_id, user_pw, user_name, email, role, created_at
+        SELECT user_no, user_id, user_pw, user_name, email, profile_image_url, role, created_at
         FROM users
         WHERE user_no = #{userNo}
     </select>
+
+    <update id="updateProfile">
+        UPDATE users
+        SET user_name = #{userName},
+            email = #{email}
+        WHERE user_no = #{userNo}
+    </update>
+
+    <update id="updateProfileImage">
+        UPDATE users
+        SET profile_image_url = #{profileImageUrl}
+        WHERE user_no = #{userNo}
+    </update>
 
     <select id="countUsers" resultType="int">
         SELECT COUNT(*) FROM users

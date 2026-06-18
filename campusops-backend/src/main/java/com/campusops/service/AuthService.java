@@ -3,7 +3,9 @@ package com.campusops.service;
 import com.campusops.dto.AuthRequestDTO;
 import com.campusops.dto.AuthResponseDTO;
 import com.campusops.dto.EmailVerificationDTO;
+import com.campusops.dto.UserUpdateRequestDTO;
 import com.campusops.vo.UserVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -14,4 +16,6 @@ public interface AuthService {
     void verifyEmail(EmailVerificationDTO request);
     void logout(String token);
     UserVO getCurrentUser();
+    UserVO updateCurrentUser(UserUpdateRequestDTO request);
+    UserVO updateProfileImage(MultipartFile file);
 }

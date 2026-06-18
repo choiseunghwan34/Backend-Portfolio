@@ -18,6 +18,301 @@
   --content-max: 1840px;
 }
 
+.navbar__user:hover,
+.navbar__user.active {
+  border-color: rgba(31, 95, 153, 0.28);
+  background: #eef6ff;
+  color: var(--primary);
+}
+
+.navbar__user--admin {
+  border-color: rgba(18, 59, 99, 0.2);
+  background: #f2f7fc;
+}
+
+.mypage {
+  display: grid;
+  gap: 1rem;
+}
+
+.mypage-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: 210px;
+  padding: 2.35rem;
+  overflow: hidden;
+  border: 1px solid rgba(220, 231, 242, 0.9);
+  border-radius: 24px;
+  background:
+    linear-gradient(90deg, rgba(8, 35, 63, 0.94), rgba(18, 59, 99, 0.8) 48%, rgba(31, 95, 153, 0.54)),
+    url("https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=1600&q=80") center 45% / cover;
+  color: #fff;
+  box-shadow: 0 16px 38px rgba(15, 47, 87, 0.08);
+}
+
+.mypage-hero h1 {
+  margin: 0.55rem 0 0.65rem;
+  font-size: clamp(2.25rem, 4vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.055em;
+}
+
+.mypage-hero p {
+  max-width: 34rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.75;
+}
+
+.mypage-hero__badge {
+  min-width: 190px;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(8, 35, 63, 0.54);
+  backdrop-filter: blur(12px);
+}
+
+.mypage-hero__badge span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.mypage-hero__badge strong {
+  display: block;
+  color: #fff;
+  font-size: 1.6rem;
+  letter-spacing: -0.035em;
+}
+
+.mypage-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.mypage-card {
+  padding: 1.45rem;
+  border: 1px solid #dce7f2;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 14px 32px rgba(15, 47, 87, 0.06);
+}
+
+.mypage-card--loading {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.mypage-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.15rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.mypage-card h2 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 1.2rem;
+  letter-spacing: -0.035em;
+}
+
+.mypage-card p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.mypage-form {
+  max-width: 680px;
+}
+
+.mypage-profile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.3rem;
+  padding: 1rem;
+  border: 1px solid #dce7f2;
+  border-radius: 18px;
+  background: #f8fbff;
+}
+
+.mypage-profile strong {
+  display: block;
+  color: var(--primary);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.mypage-profile p {
+  max-width: 34rem;
+  margin: 0.25rem 0 0;
+}
+
+.mypage-avatar {
+  position: relative;
+  width: 5.4rem;
+  height: 5.4rem;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid rgba(18, 59, 99, 0.16);
+  border-radius: 24px;
+  background: linear-gradient(145deg, #08233f, #1f5f99);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(15, 47, 87, 0.12);
+}
+
+.mypage-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.mypage-avatar > span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.mypage-avatar em {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 0.38rem 0.25rem;
+  background: rgba(8, 35, 63, 0.82);
+  color: #fff;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 900;
+  text-align: center;
+  transition: background-color var(--transition);
+}
+
+.mypage-avatar:hover em {
+  background: rgba(47, 128, 237, 0.9);
+}
+
+.mypage-form input:disabled {
+  color: #718096;
+  background: #f3f7fb;
+}
+
+.mypage-summary dl {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.15rem 0;
+}
+
+.mypage-summary dl div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.mypage-summary dl div:last-child {
+  border-bottom: 0;
+}
+
+.mypage-summary dt {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.mypage-summary dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 900;
+}
+
+.mypage-links {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1.2rem;
+}
+
+.mypage-links a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: 0 0.95rem;
+  border: 1px solid #dce7f2;
+  border-radius: 14px;
+  color: var(--primary);
+  font-size: 0.9rem;
+  font-weight: 850;
+  transition: background-color var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.mypage-links a::after {
+  content: '->';
+  color: #7c91a8;
+}
+
+.mypage-links a:hover {
+  border-color: rgba(47, 128, 237, 0.28);
+  background: #f6faff;
+}
+
+@media (max-width: 920px) {
+  .mypage-hero,
+  .mypage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-hero {
+    display: grid;
+    padding: 1.6rem;
+  }
+
+  .mypage-hero__badge {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .mypage-hero {
+    min-height: 260px;
+    padding: 1.35rem;
+    border-radius: 18px;
+  }
+
+  .mypage-card {
+    padding: 1.1rem;
+    border-radius: 17px;
+  }
+
+  .mypage-profile {
+    align-items: flex-start;
+  }
+
+  .mypage-avatar {
+    width: 4.6rem;
+    height: 4.6rem;
+    border-radius: 18px;
+  }
+}
+
 * { box-sizing: border-box; }
 html, body, #root { min-height: 100%; }
 body {
@@ -159,6 +454,16 @@ select:focus-visible {
   border-radius: 999px;
   background: var(--success);
   box-shadow: 0 0 0 4px rgba(18, 184, 134, 0.13);
+}
+
+.navbar__user-avatar {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: 0 0 auto;
+  border: 1px solid rgba(18, 59, 99, 0.12);
+  border-radius: 999px;
+  object-fit: cover;
+  background: #fff;
 }
 
 .text-button {

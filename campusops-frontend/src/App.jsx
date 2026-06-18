@@ -22,6 +22,7 @@ import AdminRoomPage from './pages/AdminRoomPage';
 import HomePage from './pages/HomePage';
 import QnaPage from './pages/QnaPage';
 import EmailVerifyPage from './pages/EmailVerifyPage';
+import MyPage from './pages/MyPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/email-verify" element={<EmailVerifyPage />} />
           <Route path="/qna" element={<QnaPage />} />
+          <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
           <Route path="/notices" element={<NoticeListPage />} />
           <Route path="/notices/:noticeNo" element={<NoticeDetailPage />} />

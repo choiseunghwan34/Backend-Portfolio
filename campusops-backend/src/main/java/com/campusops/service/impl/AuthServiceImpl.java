@@ -5,12 +5,15 @@ import com.campusops.dto.AuthRequestDTO;
 import com.campusops.dto.AuthResponseDTO;
 import com.campusops.dto.EmailVerificationDTO;
 import com.campusops.dto.TokenPrincipalDTO;
+import com.campusops.dto.UserUpdateRequestDTO;
 import com.campusops.exception.BusinessException;
 import com.campusops.security.JwtUtil;
 import com.campusops.service.AuthService;
+import com.campusops.service.FileStorageService;
 import com.campusops.util.PasswordUtil;
 import com.campusops.util.RedisKeys;
 import com.campusops.util.SecurityUtil;
+import com.campusops.vo.FileAttachmentVO;
 import com.campusops.vo.UserVO;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
@@ -47,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, Object> redisTemplate;
     private final JavaMailSender mailSender;
+    private final FileStorageService fileStorageService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${jwt.expiration:7200000}")
@@ -108,7 +113,7 @@ public class AuthServiceImpl implements AuthService {
                 defaultExpirationMillis
         );
         cacheActiveToken(saved, token, defaultExpirationMillis);
-        return new AuthResponseDTO(token, saved.getUserNo(), saved.getUserId(), saved.getUserName(), saved.getRole(), false);
+        return new AuthResponseDTO(token, saved.getUserNo(), saved.getUserId(), saved.getUserName(), saved.getProfileImageUrl(), saved.getRole(), false);
     }
 
     @Override
@@ -125,7 +130,7 @@ public class AuthServiceImpl implements AuthService {
                 expirationMillis
         );
         cacheActiveToken(user, token, expirationMillis);
-        return new AuthResponseDTO(token, user.getUserNo(), user.getUserId(), user.getUserName(), user.getRole(), duplicateLogin);
+        return new AuthResponseDTO(token, user.getUserNo(), user.getUserId(), user.getUserName(), user.getProfileImageUrl(), user.getRole(), duplicateLogin);
     }
 
     @Override
@@ -180,6 +185,38 @@ public class AuthServiceImpl implements AuthService {
         if (user == null) {
             throw new BusinessException("사용자 정보를 찾을 수 없습니다.", 404);
         }
+        user.setUserPw(null);
+        return user;
+    }
+
+    @Override
+    public UserVO updateCurrentUser(UserUpdateRequestDTO request) {
+        TokenPrincipalDTO principal = SecurityUtil.currentPrincipal();
+        String email = normalizeEmail(request.getEmail());
+        UserVO exists = userDao.selectByEmail(email);
+        if (exists != null && !exists.getUserNo().equals(principal.getUserNo())) {
+            throw new BusinessException("이미 사용 중인 이메일입니다.");
+        }
+
+        int updated = userDao.updateProfile(principal.getUserNo(), request.getUserName().trim(), email);
+        if (updated == 0) {
+            throw new BusinessException("사용자 정보를 찾을 수 없습니다.", 404);
+        }
+        UserVO user = userDao.selectByUserNo(principal.getUserNo());
+        user.setUserPw(null);
+        return user;
+    }
+
+    @Override
+    public UserVO updateProfileImage(MultipartFile file) {
+        TokenPrincipalDTO principal = SecurityUtil.currentPrincipal();
+        FileAttachmentVO attachment = fileStorageService.upload("USER", principal.getUserNo(), file);
+        int updated = userDao.updateProfileImage(principal.getUserNo(), attachment.getFileUrl());
+        if (updated == 0) {
+            throw new BusinessException("사용자 정보를 찾을 수 없습니다.", 404);
+        }
+        UserVO user = userDao.selectByUserNo(principal.getUserNo());
+        user.setUserPw(null);
         return user;
     }
 

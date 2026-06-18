@@ -24,7 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FileStorageServiceImpl implements FileStorageService {
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
-    private static final Set<String> ALLOWED_TARGETS = Set.of("NOTICE", "REPORT", "ASSET", "ROOM");
+    private static final Set<String> ALLOWED_TARGETS = Set.of("NOTICE", "REPORT", "ASSET", "ROOM", "USER");
 
     private final FileAttachmentDao fileAttachmentDao;
 

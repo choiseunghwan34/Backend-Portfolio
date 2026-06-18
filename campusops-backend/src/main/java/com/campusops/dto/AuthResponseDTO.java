@@ -10,6 +10,7 @@ public class AuthResponseDTO {
     private Long userNo;
     private String userId;
     private String userName;
+    private String profileImageUrl;
     private String role;
     private Boolean duplicateLogin;
 }

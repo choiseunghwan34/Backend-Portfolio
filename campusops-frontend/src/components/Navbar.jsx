@@ -36,7 +36,7 @@ export default function Navbar() {
     } finally {
       clearSession();
       setLoggingOut(false);
-      await notify({ title: '로그아웃되었습니다', message: '다음에 다시 만나요.', type: 'success' });
+      await notify({ title: '로그아웃되었습니다.', message: '다음에 다시 만나요.', type: 'success' });
       navigate('/home');
     }
   };
@@ -72,10 +72,18 @@ export default function Navbar() {
             >
               대시보드
             </Link>
-            <span className={`navbar__user ${user.role === 'ADMIN' ? 'navbar__user--admin' : ''}`} title={displayName}>
-              <span className="navbar__user-dot" />
+            <Link
+              to="/mypage"
+              className={`navbar__user ${user.role === 'ADMIN' ? 'navbar__user--admin' : ''} ${isActive('/mypage') ? 'active' : ''}`}
+              title="마이페이지로 이동"
+            >
+              {user.profileImageUrl ? (
+                <img className="navbar__user-avatar" src={user.profileImageUrl} alt="" />
+              ) : (
+                <span className="navbar__user-dot" />
+              )}
               {user.role === 'ADMIN' ? `관리자(${user.userId})` : displayName}
-            </span>
+            </Link>
             <button className="text-button navbar__logout" type="button" disabled={loggingOut} onClick={logout}>
               {loggingOut ? <span className="button-spinner button-spinner--dark" /> : null}
               {loggingOut ? '로그아웃 중...' : '로그아웃'}

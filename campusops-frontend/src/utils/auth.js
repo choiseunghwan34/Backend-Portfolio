@@ -39,6 +39,17 @@ export function setSession({ token, user, autoLogin = true }) {
   notifySessionChange();
 }
 
+export function updateCurrentUser(user) {
+  if (!user) return;
+  if (localStorage.getItem(USER_KEY)) {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  }
+  if (sessionStorage.getItem(USER_KEY)) {
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+  }
+  notifySessionChange();
+}
+
 export function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);

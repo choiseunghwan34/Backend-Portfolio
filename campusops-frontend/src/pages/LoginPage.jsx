@@ -27,7 +27,13 @@ export default function LoginPage() {
 
       setSession({
         token: result.token,
-        user: { userNo: result.userNo, userId: result.userId, userName: result.userName, role: result.role },
+        user: {
+          userNo: result.userNo,
+          userId: result.userId,
+          userName: result.userName,
+          profileImageUrl: result.profileImageUrl,
+          role: result.role
+        },
         autoLogin: options.autoLogin
       });
 
