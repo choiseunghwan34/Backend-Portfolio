@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { reportApi } from '../api/reportApi';
+import EmptyState from '../components/EmptyState';
+import { SkeletonList } from '../components/Skeleton';
+import StatusTimeline from '../components/StatusTimeline';
+import { notify } from '../utils/dialog.jsx';
 
 function statusClass(value = '') {
   return String(value).toLowerCase();
@@ -16,19 +20,34 @@ const statusText = {
 export default function ReportPage() {
   const [form, setForm] = useState({ place: '', category: '', title: '', content: '' });
   const [myReports, setMyReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   const load = async () => {
-    const { data } = await reportApi.my();
-    setMyReports(data.data || []);
+    setLoading(true);
+    try {
+      const { data } = await reportApi.my();
+      setMyReports(data.data || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
-  const submit = async (e) => {
-    e.preventDefault();
-    await reportApi.create(form);
-    setForm({ place: '', category: '', title: '', content: '' });
-    load();
+  const submit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
+    try {
+      await reportApi.create(form);
+      setForm({ place: '', category: '', title: '', content: '' });
+      await notify({ title: '신고가 접수되었습니다', message: '관리자가 확인 후 처리 상태를 안내합니다.', type: 'success' });
+      await load();
+    } catch (error) {
+      await notify({ title: '신고 접수 실패', message: error?.response?.data?.message || '잠시 후 다시 시도해 주세요.', type: 'danger' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -54,28 +73,33 @@ export default function ReportPage() {
         <section className="service-panel service-panel--form">
           <header><span>REPORT FORM</span><h2>신고 등록</h2></header>
           <form className="service-form" onSubmit={submit}>
-            <label>장소<input required value={form.place} onChange={(e) => setForm({ ...form, place: e.target.value })} placeholder="예: 본관 3층 복도" /></label>
-            <label>카테고리<input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="조명, 냉난방, 출입문 등" /></label>
-            <label>제목<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="신고 제목" /></label>
-            <label>내용<textarea required rows="6" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="증상과 요청 내용을 입력하세요" /></label>
-            <button className="primary-button" type="submit">신고 등록</button>
+            <label>장소<input required value={form.place} onChange={(event) => setForm({ ...form, place: event.target.value })} placeholder="예: 본관 3층 복도" /></label>
+            <label>카테고리<input value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} placeholder="조명, 냉난방, 출입문 등" /></label>
+            <label>제목<input required value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="신고 제목" /></label>
+            <label>내용<textarea required rows="6" value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} placeholder="증상과 요청 내용을 입력하세요." /></label>
+            <button className="primary-button" type="submit" disabled={submitting}>{submitting ? '접수 중...' : '신고 등록'}</button>
           </form>
         </section>
 
         <section className="service-panel">
           <header><span>MY REPORTS</span><h2>내 신고 목록</h2></header>
-          <div className="service-list">
-            {myReports.map((report) => (
-              <Link className="service-row" key={report.reportNo} to={`/reports/${report.reportNo}`}>
-                <div>
-                  <strong>{report.title}</strong>
-                  <span>{report.place} · {report.category || '기타'}{report.adminReply ? ` · 답변: ${report.adminReply}` : ''}</span>
-                </div>
-                <span className={`status-pill ${statusClass(report.status)}`}>{statusText[report.status] || report.status}</span>
-              </Link>
-            ))}
-            {!myReports.length ? <div className="workspace-empty">아직 등록한 신고가 없습니다.</div> : null}
-          </div>
+          {loading ? (
+            <SkeletonList rows={4} />
+          ) : (
+            <div className="service-list">
+              {myReports.map((report) => (
+                <Link className="service-row" key={report.reportNo} to={`/reports/${report.reportNo}`}>
+                  <div>
+                    <strong>{report.title}</strong>
+                    <span>{report.place} · {report.category || '기타'}{report.adminReply ? ` · 답변: ${report.adminReply}` : ''}</span>
+                    <StatusTimeline steps={['RECEIVED', 'CHECKING', 'COMPLETED']} current={report.status} />
+                  </div>
+                  <span className={`status-pill ${statusClass(report.status)}`}>{statusText[report.status] || report.status}</span>
+                </Link>
+              ))}
+              {!myReports.length ? <EmptyState eyebrow="REPORT" title="아직 등록한 신고가 없습니다." description="시설 고장이나 불편 사항이 있으면 왼쪽 양식으로 신고해 주세요." /> : null}
+            </div>
+          )}
         </section>
       </div>
     </div>

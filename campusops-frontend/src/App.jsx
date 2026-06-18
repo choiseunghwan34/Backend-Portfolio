@@ -22,6 +22,7 @@ import AdminRoomPage from './pages/AdminRoomPage';
 import HomePage from './pages/HomePage';
 import QnaPage from './pages/QnaPage';
 import EmailVerifyPage from './pages/EmailVerifyPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 export default function App() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/admin/reports" element={<ProtectedRoute role="ADMIN"><AdminReportPage /></ProtectedRoute>} />
           <Route path="/admin/assets" element={<ProtectedRoute role="ADMIN"><AdminAssetPage /></ProtectedRoute>} />
           <Route path="/admin/rooms" element={<ProtectedRoute role="ADMIN"><AdminRoomPage /></ProtectedRoute>} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
     </div>

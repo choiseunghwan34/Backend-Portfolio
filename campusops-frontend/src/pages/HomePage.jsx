@@ -265,6 +265,17 @@ export default function HomePage() {
         </nav>
       </section>
 
+      {!currentUser ? (
+        <section className="demo-entry-card">
+          <div>
+            <span className="workspace-label">TRY CAMPUSOPS</span>
+            <h2>둘러보기용 계정이 준비되어 있습니다</h2>
+            <p>회원가입 없이 일반 사용자와 관리자 화면을 바로 체험할 수 있습니다. 로그인 화면 하단의 체험 계정 버튼을 이용해 주세요.</p>
+          </div>
+          <Link className="primary-button" to="/login">데모 로그인으로 이동</Link>
+        </section>
+      ) : null}
+
       {home.error && <p className="reference-data-note">{home.error}</p>}
 
       <section className="reference-dashboard">

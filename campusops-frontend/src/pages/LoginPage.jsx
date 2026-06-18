@@ -39,8 +39,8 @@ export default function LoginPage() {
 
       if (result.duplicateLogin) {
         await notify({
-          title: '기존 세션을 정리했습니다',
-          message: '다른 곳에 로그인되어 있던 세션을 종료하고 새로 로그인했습니다.',
+          title: '기존 세션이 정리되었습니다',
+          message: '다른 곳에서 로그인되어 있던 세션을 종료하고 새로 로그인했습니다.',
           type: 'warning'
         });
       }
@@ -100,7 +100,7 @@ export default function LoginPage() {
         <div className="demo-login">
           <div className="demo-login__head">
             <strong>체험 계정으로 바로 시작</strong>
-            <span>별도 가입 없이 주요 기능을 확인할 수 있습니다.</span>
+            <span>별도 가입 없이 사용자/관리자 기능을 확인할 수 있습니다.</span>
           </div>
           <div className="demo-login__grid">
             <button type="button" className="secondary-button" disabled={Boolean(loadingType)} onClick={() => loginWith(demoAccounts.user, 'user')}>

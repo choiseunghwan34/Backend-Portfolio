@@ -1,19 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { noticeApi } from '../api/noticeApi';
+import { SkeletonCard } from '../components/Skeleton';
 
 export default function NoticeDetailPage() {
   const { noticeNo } = useParams();
   const [notice, setNotice] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
-      const { data } = await noticeApi.detail(noticeNo);
-      setNotice(data.data);
+      setLoading(true);
+      try {
+        const { data } = await noticeApi.detail(noticeNo);
+        if (mounted) setNotice(data.data);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     })();
+    return () => { mounted = false; };
   }, [noticeNo]);
 
-  if (!notice) return <div className="workspace-card detail-article">불러오는 중...</div>;
+  if (loading) {
+    return (
+      <div className="notice-board-page">
+        <section className="notice-board-hero compact">
+          <span className="workspace-label">NOTICE DETAIL</span>
+          <h1>공지사항</h1>
+        </section>
+        <SkeletonCard rows={6} />
+      </div>
+    );
+  }
+
+  if (!notice) {
+    return (
+      <div className="notice-board-page">
+        <section className="notice-document">
+          <h2>공지사항을 찾을 수 없습니다.</h2>
+          <Link to="/notices" className="primary-button">목록으로</Link>
+        </section>
+      </div>
+    );
+  }
 
   const createdDate = String(notice.createdAt || '').slice(0, 10) || '-';
   const updatedDate = String(notice.updatedAt || notice.createdAt || '').slice(0, 10) || '-';
@@ -35,7 +65,7 @@ export default function NoticeDetailPage() {
             <span>{notice.category || '공지'}</span>
             <span>{createdDate}</span>
             <span>조회 {viewCount}</span>
-            {notice.importantYn ? <strong>중요</strong> : null}
+            {notice.importantYn ? <strong>중요 공지</strong> : null}
           </div>
         </header>
 
@@ -52,9 +82,9 @@ export default function NoticeDetailPage() {
         </dl>
 
         <nav className="notice-document__nav" aria-label="공지 이동">
-          <button type="button" className="notice-circle" disabled>‹</button>
+          <button type="button" className="notice-circle" disabled>이전</button>
           <Link to="/notices" className="notice-document__list">목록</Link>
-          <button type="button" className="notice-circle" disabled>›</button>
+          <button type="button" className="notice-circle" disabled>다음</button>
         </nav>
       </article>
     </div>

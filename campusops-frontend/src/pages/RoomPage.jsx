@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { roomApi } from '../api/roomApi';
+import EmptyState from '../components/EmptyState';
+import { SkeletonList } from '../components/Skeleton';
+import StatusTimeline from '../components/StatusTimeline';
 import { confirmDialog, notify } from '../utils/dialog.jsx';
 
 function statusClass(value = '') {
@@ -13,7 +16,7 @@ const roomStatusText = {
 };
 
 const reservationStatusText = {
-  RESERVED: '예약됨',
+  RESERVED: '예약중',
   CANCELLED: '취소됨',
   COMPLETED: '이용 완료'
 };
@@ -28,15 +31,21 @@ export default function RoomPage() {
   const [myReservations, setMyReservations] = useState([]);
   const [form, setForm] = useState({ roomNo: '', reservationDate: '', startTime: '', endTime: '' });
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const availableRooms = useMemo(() => rooms.filter((room) => room.status === 'AVAILABLE'), [rooms]);
   const activeReservations = useMemo(() => myReservations.filter((item) => item.status === 'RESERVED'), [myReservations]);
 
   const load = async () => {
-    const [roomRes, reservationRes] = await Promise.all([roomApi.list(), roomApi.myReservations()]);
-    setRooms(roomRes.data.data || []);
-    setMyReservations(reservationRes.data.data || []);
+    setLoading(true);
+    try {
+      const [roomRes, reservationRes] = await Promise.all([roomApi.list(), roomApi.myReservations()]);
+      setRooms(roomRes.data.data || []);
+      setMyReservations(reservationRes.data.data || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -107,7 +116,7 @@ export default function RoomPage() {
 
       <section className="service-guide">
         <strong>예약 이용 안내</strong>
-        <p>예약 시간이 지나면 자동으로 이용 완료 상태로 전환됩니다. 운영 중지된 공간과 이미 예약된 시간대는 예약할 수 없습니다.</p>
+        <p>예약 시간이 지나면 자동으로 이용 완료 상태로 전환됩니다. 운영 중지된 공간과 이미 예약된 시간은 신청할 수 없습니다.</p>
       </section>
 
       {message ? <div className="detail-message">{message}</div> : null}
@@ -115,15 +124,19 @@ export default function RoomPage() {
       <div className="service-layout">
         <section className="service-panel">
           <header><span>ROOM DIRECTORY</span><h2>공간 목록</h2></header>
-          <div className="service-list room-directory">
-            {rooms.map((room) => (
-              <Link className={`service-row ${room.status === 'DISABLED' ? 'is-disabled' : ''}`} key={room.roomNo} to={`/rooms/${room.roomNo}`}>
-                <div><strong>{room.roomName}</strong><span>{room.location || '위치 미정'} · {room.capacity || 0}명</span></div>
-                <span className={`status-pill ${statusClass(room.status)}`}>{roomStatusText[room.status] || room.status}</span>
-              </Link>
-            ))}
-            {!rooms.length ? <div className="workspace-empty">등록된 공간이 없습니다.</div> : null}
-          </div>
+          {loading ? (
+            <SkeletonList rows={4} />
+          ) : (
+            <div className="service-list room-directory">
+              {rooms.map((room) => (
+                <Link className={`service-row ${room.status === 'DISABLED' ? 'is-disabled' : ''}`} key={room.roomNo} to={`/rooms/${room.roomNo}`}>
+                  <div><strong>{room.roomName}</strong><span>{room.location || '위치 미정'} · {room.capacity || 0}명</span></div>
+                  <span className={`status-pill ${statusClass(room.status)}`}>{roomStatusText[room.status] || room.status}</span>
+                </Link>
+              ))}
+              {!rooms.length ? <EmptyState eyebrow="ROOM" title="등록된 공간이 없습니다." description="관리자가 공간을 등록하면 이곳에 표시됩니다." /> : null}
+            </div>
+          )}
         </section>
 
         <section className="service-panel service-panel--form">
@@ -142,32 +155,35 @@ export default function RoomPage() {
             <label>예약 날짜<input required type="date" value={form.reservationDate} onChange={(event) => setForm({ ...form, reservationDate: event.target.value })} /></label>
             <label>시작 시간<input required type="time" value={form.startTime} onChange={(event) => setForm({ ...form, startTime: event.target.value })} /></label>
             <label>종료 시간<input required type="time" value={form.endTime} onChange={(event) => setForm({ ...form, endTime: event.target.value })} /></label>
-            <button className="primary-button" type="submit" disabled={submitting}>
-              {submitting ? '예약 중...' : '예약 신청'}
-            </button>
+            <button className="primary-button" type="submit" disabled={submitting}>{submitting ? '예약 중...' : '예약 신청'}</button>
           </form>
         </section>
       </div>
 
       <section className="service-panel">
         <header><span>MY RESERVATIONS</span><h2>내 예약 내역</h2></header>
-        <div className="service-list service-list--compact">
-          {myReservations.map((reservation) => (
-            <div className="service-row" key={reservation.reservationNo}>
-              <div>
-                <strong>{reservation.roomName || `공간 #${reservation.roomNo}`}</strong>
-                <span>{reservation.reservationDate} · {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}</span>
+        {loading ? (
+          <SkeletonList rows={4} />
+        ) : (
+          <div className="service-list service-list--compact">
+            {myReservations.map((reservation) => (
+              <div className="service-row" key={reservation.reservationNo}>
+                <div>
+                  <strong>{reservation.roomName || `공간 #${reservation.roomNo}`}</strong>
+                  <span>{reservation.reservationDate} · {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}</span>
+                  <StatusTimeline steps={['RESERVED', 'COMPLETED']} current={reservation.status} />
+                </div>
+                <div className="service-row__actions">
+                  <span className={`status-pill ${statusClass(reservation.status)}`}>{reservationStatusText[reservation.status] || reservation.status}</span>
+                  {reservation.status === 'RESERVED'
+                    ? <button className="secondary-button danger-button" type="button" onClick={() => cancelReservation(reservation.reservationNo)}>예약 취소</button>
+                    : null}
+                </div>
               </div>
-              <div className="service-row__actions">
-                <span className={`status-pill ${statusClass(reservation.status)}`}>{reservationStatusText[reservation.status] || reservation.status}</span>
-                {reservation.status === 'RESERVED'
-                  ? <button className="secondary-button" type="button" onClick={() => cancelReservation(reservation.reservationNo)}>예약 취소</button>
-                  : null}
-              </div>
-            </div>
-          ))}
-          {!myReservations.length ? <div className="workspace-empty">예약 내역이 없습니다.</div> : null}
-        </div>
+            ))}
+            {!myReservations.length ? <EmptyState eyebrow="RESERVATION" title="예약 내역이 없습니다." description="필요한 공간을 선택해 예약을 신청해 보세요." /> : null}
+          </div>
+        )}
       </section>
     </div>
   );
