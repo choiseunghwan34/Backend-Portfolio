@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { notify } from '../utils/dialog.jsx';
+
+const verifiedKey = (email) => `campusops:email-verified:${String(email || '').trim().toLowerCase()}`;
 
 export default function EmailVerifyPage() {
   const [searchParams] = useSearchParams();
@@ -15,9 +17,10 @@ export default function EmailVerifyPage() {
     setMessage('');
     try {
       await authApi.verifyEmail({ email, token });
+      localStorage.setItem(verifiedKey(email), String(Date.now()));
       setStatus('success');
-      setMessage('이메일 인증이 완료되었습니다. 회원가입 페이지로 돌아가 가입을 마무리해 주세요.');
-      await notify({ title: '이메일 인증 완료', message: '이제 회원가입을 진행할 수 있습니다.', type: 'success' });
+      setMessage('이메일 인증이 완료되었습니다. 기존 회원가입 화면으로 돌아가면 인증 완료 상태로 변경됩니다.');
+      await notify({ title: '이메일 인증 완료', message: '회원가입 화면에서 가입하기를 눌러 마무리해 주세요.', type: 'success' });
     } catch (error) {
       setStatus('error');
       setMessage(error?.response?.data?.message || '이메일 인증에 실패했습니다.');
@@ -49,9 +52,9 @@ export default function EmailVerifyPage() {
           {status === 'success' ? '인증 완료' : status === 'loading' ? '인증 중...' : '인증하기'}
         </button>
 
-        <div className="auth-footer">
-          <Link to="/signup">회원가입 페이지로 돌아가기</Link>
-        </div>
+        {status === 'success' ? (
+          <p className="auth-footer">이 창은 닫아도 됩니다.</p>
+        ) : null}
       </div>
     </div>
   );

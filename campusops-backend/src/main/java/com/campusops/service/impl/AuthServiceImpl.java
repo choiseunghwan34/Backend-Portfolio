@@ -237,6 +237,7 @@ public class AuthServiceImpl implements AuthService {
         templateParams.put("from_name", mailFromName);
         templateParams.put("app_name", "CampusOps");
         templateParams.put("verification_url", verificationUrl);
+        templateParams.put("logo_url", buildAssetUrl("/campusops-mark.svg"));
         templateParams.put("expire_minutes", EMAIL_TOKEN_TTL.toMinutes());
         templateParams.put("support_email", resolveSenderSafely());
         templateParams.put("subject", "[CampusOps] 이메일 인증 요청");
@@ -305,6 +306,14 @@ public class AuthServiceImpl implements AuthService {
         return "CampusOps 이메일 인증을 완료하려면 아래 링크를 열고 인증하기 버튼을 눌러 주세요.\n\n"
                 + verificationUrl
                 + "\n\n이 링크는 10분 동안 유효합니다.";
+    }
+
+    private String buildAssetUrl(String path) {
+        return UriComponentsBuilder
+                .fromHttpUrl(frontendUrl)
+                .path(path)
+                .build()
+                .toUriString();
     }
 
     private String normalizeEmail(String email) {

@@ -4828,6 +4828,11 @@ select:focus-visible {
   font-weight: 850;
 }
 
+.email-verify-hint.is-verified {
+  border-color: #b9efd7;
+  background: linear-gradient(180deg, #f0fff7 0%, #ffffff 100%);
+}
+
 .email-verify-card {
   overflow: hidden;
 }
