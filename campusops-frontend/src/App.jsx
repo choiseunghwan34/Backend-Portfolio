@@ -37,8 +37,8 @@ export default function App() {
           <Route path="/email-verify" element={<EmailVerifyPage />} />
           <Route path="/qna" element={<QnaPage />} />
           <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
-          <Route path="/notices" element={<ProtectedRoute><NoticeListPage /></ProtectedRoute>} />
-          <Route path="/notices/:noticeNo" element={<ProtectedRoute><NoticeDetailPage /></ProtectedRoute>} />
+          <Route path="/notices" element={<NoticeListPage />} />
+          <Route path="/notices/:noticeNo" element={<NoticeDetailPage />} />
           <Route path="/reports" element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
           <Route path="/reports/:reportNo" element={<ProtectedRoute><ReportDetailPage /></ProtectedRoute>} />
           <Route path="/assets" element={<ProtectedRoute><AssetPage /></ProtectedRoute>} />

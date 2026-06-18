@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { homeApi } from '../api/homeApi';
 import { clearSession, getCurrentUser } from '../utils/auth';
+import { toast } from '../utils/dialog.jsx';
 
 const quickServices = [
   { no: '01', title: '강의실 예약', description: '오늘 가능한 강의실 확인', to: '/rooms' },
@@ -45,10 +46,6 @@ const toneByStatus = {
   OVERDUE: 'rejected'
 };
 
-function unwrap(response, fallback = []) {
-  return response?.value?.data?.data ?? fallback;
-}
-
 function toArray(value) {
   if (Array.isArray(value)) return value;
   if (Array.isArray(value?.items)) return value.items;
@@ -62,9 +59,9 @@ function formatDate(value) {
   return String(value).slice(0, 10).replaceAll('-', '.');
 }
 
-function isToday(value) {
-  if (!value) return false;
-  return String(value).slice(0, 10) === new Date().toISOString().slice(0, 10);
+function formatTime(value) {
+  if (!value) return '-';
+  return String(value).slice(0, 5);
 }
 
 function progressWidth(value, max) {
@@ -100,6 +97,11 @@ export default function HomePage() {
     rentals: [],
     reservations: [],
     unreadCount: 0,
+    todayReservations: 0,
+    pendingReports: 0,
+    requestedRentals: 0,
+    availableRooms: 0,
+    availableAssets: 0,
     loading: true,
     error: ''
   });
@@ -107,6 +109,7 @@ export default function HomePage() {
   const logout = async () => {
     try {
       await authApi.logout();
+      toast({ title: '로그아웃 완료', message: '현재 기기에서 세션이 종료되었습니다.', type: 'success' });
     } finally {
       clearSession();
       navigate('/home');
@@ -121,14 +124,21 @@ export default function HomePage() {
       if (!mounted) return;
 
       const payload = data?.data || {};
+      const rooms = toArray(payload.rooms);
+      const assets = toArray(payload.assets);
       setHome({
         notices: toArray(payload.notices),
-        assets: toArray(payload.assets),
-        rooms: toArray(payload.rooms),
+        assets,
+        rooms,
         reports: toArray(payload.reports),
         rentals: toArray(payload.rentals),
         reservations: toArray(payload.reservations),
         unreadCount: Number(payload.unreadCount ?? 0),
+        todayReservations: Number(payload.todayReservations ?? 0),
+        pendingReports: Number(payload.pendingReports ?? 0),
+        requestedRentals: Number(payload.requestedRentals ?? 0),
+        availableRooms: Number(payload.availableRooms ?? rooms.filter((room) => room.status !== 'DISABLED').length),
+        availableAssets: Number(payload.availableAssets ?? assets.filter((asset) => asset.status === 'AVAILABLE').length),
         loading: false,
         error: ''
       });
@@ -136,32 +146,27 @@ export default function HomePage() {
 
     loadHomeData().catch(() => {
       if (!mounted) return;
-      setHome((prev) => ({ ...prev, loading: false, error: '운영 데이터를 불러오지 못했습니다.' }));
+      setHome((prev) => ({ ...prev, loading: false, error: '운영 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.' }));
     });
 
     return () => { mounted = false; };
   }, []);
 
   const derived = useMemo(() => {
-    const todayReservations = home.reservations.filter((item) => isToday(item.reservationDate) && item.status === 'RESERVED').length;
-    const pendingReports = home.reports.filter((item) => ['RECEIVED', 'CHECKING'].includes(item.status)).length;
-    const requestedRentals = home.rentals.filter((item) => item.rentalStatus === 'REQUESTED').length;
-    const availableAssets = home.assets.filter((item) => item.status === 'AVAILABLE').length;
-    const availableRooms = home.rooms.filter((item) => item.status !== 'DISABLED').length;
-    const maxOperation = Math.max(todayReservations, pendingReports, requestedRentals, home.unreadCount, 1);
+    const maxOperation = Math.max(home.todayReservations, home.pendingReports, home.requestedRentals, home.unreadCount, 1);
 
     return {
       heroStats: [
-        { icon: 'calendar', label: '오늘 예약', value: `${todayReservations}건` },
-        { icon: 'report', label: '처리중 신고', value: `${pendingReports}건` },
-        { icon: 'check', label: '승인 대기', value: `${requestedRentals}건` },
+        { icon: 'calendar', label: '오늘 예약', value: `${home.todayReservations}건` },
+        { icon: 'report', label: '처리중 신고', value: `${home.pendingReports}건` },
+        { icon: 'check', label: '승인 대기', value: `${home.requestedRentals}건` },
         { icon: 'bell', label: '알림', value: `${home.unreadCount}건` }
       ],
       operations: [
-        { label: '오늘 예약', description: `예약 가능 공간 ${availableRooms}곳`, value: todayReservations, width: progressWidth(todayReservations, maxOperation) },
-        { label: '처리중 신고', description: `내 신고 ${home.reports.length}건`, value: pendingReports, width: progressWidth(pendingReports, maxOperation) },
-        { label: '승인 대기', description: `대여 가능 기자재 ${availableAssets}개`, value: requestedRentals, width: progressWidth(requestedRentals, maxOperation) },
-        { label: '읽지 않은 알림', description: '확인 필요한 알림', value: home.unreadCount, width: progressWidth(home.unreadCount, maxOperation) }
+        { label: '오늘 예약', description: `예약 가능 공간 ${home.availableRooms}곳`, value: home.todayReservations, width: progressWidth(home.todayReservations, maxOperation) },
+        { label: '처리중 신고', description: currentUser ? `내 신고 ${home.reports.length}건` : '전체 접수 현황', value: home.pendingReports, width: progressWidth(home.pendingReports, maxOperation) },
+        { label: '승인 대기', description: `대여 가능 기자재 ${home.availableAssets}개`, value: home.requestedRentals, width: progressWidth(home.requestedRentals, maxOperation) },
+        { label: '읽지 않은 알림', description: currentUser ? '확인 필요한 알림' : '로그인 후 확인', value: home.unreadCount, width: progressWidth(home.unreadCount, maxOperation) }
       ],
       workTabs: [
         {
@@ -191,7 +196,7 @@ export default function HomePage() {
           label: '공간 예약',
           items: home.reservations.slice(0, 3).map((item) => ({
             icon: 'calendar',
-            title: `${item.roomName || `공간 #${item.roomNo}`} · ${item.startTime || '-'} - ${item.endTime || '-'}`,
+            title: `${item.roomName || `공간 #${item.roomNo}`} · ${formatTime(item.startTime)} - ${formatTime(item.endTime)}`,
             meta: formatDate(item.reservationDate),
             status: reservationStatusText[item.status] || item.status,
             tone: toneByStatus[item.status] || 'checking'
@@ -199,7 +204,7 @@ export default function HomePage() {
         }
       ]
     };
-  }, [home]);
+  }, [currentUser, home]);
 
   const activeWork = derived.workTabs.find((tab) => tab.id === activeTab) || derived.workTabs[0];
   const dashboardPath = currentUser?.role === 'ADMIN' ? '/admin' : '/dashboard';
@@ -269,7 +274,7 @@ export default function HomePage() {
         <section className="demo-entry-card">
           <div>
             <span className="workspace-label">TRY CAMPUSOPS</span>
-            <h2>둘러보기용 계정이 준비되어 있습니다</h2>
+            <h2>둘러보기 계정이 준비되어 있습니다</h2>
             <p>회원가입 없이 일반 사용자와 관리자 화면을 바로 체험할 수 있습니다. 로그인 화면 하단의 체험 계정 버튼을 이용해 주세요.</p>
           </div>
           <Link className="primary-button" to="/login">데모 로그인으로 이동</Link>
@@ -298,7 +303,7 @@ export default function HomePage() {
         <article className="reference-card reference-guide">
           <header className="reference-card__head">
             <h2><LineIcon name="building" />서비스 가이드</h2>
-            <Link to="/notices">더보기 <span>›</span></Link>
+            <Link to="/qna">더보기 <span>›</span></Link>
           </header>
           <div className="reference-guide__list">
             {guides.map((guide, index) => (
@@ -341,7 +346,7 @@ export default function HomePage() {
                 <div><strong>{item.title}</strong><small>{item.meta}</small></div>
                 <b className={`ops-status ops-status--${item.tone}`}>{item.status}</b>
               </div>
-            )) : <div className="reference-empty">로그인 후 내 업무 현황을 확인할 수 있습니다.</div>}
+            )) : <div className="reference-empty">로그인하면 개인 업무 현황을 확인할 수 있습니다.</div>}
           </div>
         </article>
 

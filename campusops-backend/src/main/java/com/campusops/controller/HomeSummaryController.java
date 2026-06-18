@@ -7,6 +7,8 @@ import com.campusops.dao.ReportDao;
 import com.campusops.dao.RoomDao;
 import com.campusops.dto.ApiResponse;
 import com.campusops.dto.TokenPrincipalDTO;
+import com.campusops.vo.AssetVO;
+import com.campusops.vo.RoomVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,14 +35,24 @@ public class HomeSummaryController {
     public ApiResponse<Map<String, Object>> summary() {
         roomDao.completeExpiredReservations();
 
+        List<AssetVO> assets = assetDao.selectAssets();
+        List<RoomVO> rooms = roomDao.selectRooms();
+        int availableAssets = (int) assets.stream().filter(asset -> "AVAILABLE".equals(asset.getStatus())).count();
+        int availableRooms = (int) rooms.stream().filter(room -> !"DISABLED".equals(room.getStatus())).count();
+
         Map<String, Object> data = new HashMap<>();
         data.put("notices", noticeDao.selectRecentNotices(4));
-        data.put("assets", assetDao.selectAssets());
-        data.put("rooms", roomDao.selectRooms());
+        data.put("assets", assets);
+        data.put("rooms", rooms);
         data.put("reports", Collections.emptyList());
         data.put("rentals", Collections.emptyList());
         data.put("reservations", Collections.emptyList());
         data.put("unreadCount", 0);
+        data.put("todayReservations", roomDao.countTodayReservations());
+        data.put("pendingReports", reportDao.countByStatus("RECEIVED") + reportDao.countByStatus("CHECKING"));
+        data.put("requestedRentals", assetDao.countRequestedRentals());
+        data.put("availableAssets", availableAssets);
+        data.put("availableRooms", availableRooms);
 
         TokenPrincipalDTO principal = currentPrincipalOrNull();
         if (principal != null) {

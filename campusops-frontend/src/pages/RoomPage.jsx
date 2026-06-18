@@ -26,6 +26,12 @@ function formatTime(value) {
   return String(value).slice(0, 5);
 }
 
+function isPastSlot(date, startTime) {
+  if (!date || !startTime) return false;
+  const start = new Date(`${date}T${startTime}`);
+  return Number.isFinite(start.getTime()) && start <= new Date();
+}
+
 export default function RoomPage() {
   const [rooms, setRooms] = useState([]);
   const [myReservations, setMyReservations] = useState([]);
@@ -61,6 +67,18 @@ export default function RoomPage() {
     }
     if (selectedRoom.status !== 'AVAILABLE') {
       await notify({ title: '예약할 수 없는 공간입니다', message: '운영 중지된 공간은 예약할 수 없습니다.', type: 'warning' });
+      return;
+    }
+    if (!form.reservationDate || !form.startTime || !form.endTime) {
+      await notify({ title: '예약 정보 확인', message: '예약 날짜와 시간을 모두 입력해 주세요.', type: 'info' });
+      return;
+    }
+    if (form.startTime >= form.endTime) {
+      await notify({ title: '시간 확인 필요', message: '종료 시간은 시작 시간보다 늦어야 합니다.', type: 'warning' });
+      return;
+    }
+    if (isPastSlot(form.reservationDate, form.startTime)) {
+      await notify({ title: '지난 시간입니다', message: '현재 이후 시간만 예약할 수 있습니다.', type: 'warning' });
       return;
     }
 

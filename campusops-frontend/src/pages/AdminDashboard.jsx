@@ -15,6 +15,13 @@ const reportStatusText = {
   REJECTED: '반려'
 };
 
+const shortcuts = [
+  { label: '공지 관리', description: '운영 공지 등록과 수정', to: '/admin/notices' },
+  { label: '신고 처리', description: '접수 신고 상태와 답변 관리', to: '/admin/reports' },
+  { label: '기자재 승인', description: '대여 승인, 반려, 반납 처리', to: '/admin/assets' },
+  { label: '공간 예약', description: '공간 등록과 예약 현황 관리', to: '/admin/rooms' }
+];
+
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -47,6 +54,15 @@ export default function AdminDashboard() {
           <p>공지 등록, 시설 신고 처리, 기자재 승인, 공간 예약 현황을 한 화면에서 관리합니다.</p>
         </div>
         <div className="workspace-hero__aside"><span>오늘 예약</span><strong>{stats.todayReservations || 0}건</strong></div>
+      </section>
+
+      <section className="admin-command-strip">
+        {shortcuts.map((item) => (
+          <Link to={item.to} key={item.to}>
+            <strong>{item.label}</strong>
+            <span>{item.description}</span>
+          </Link>
+        ))}
       </section>
 
       <section className="workspace-stats admin-stats">
@@ -96,18 +112,6 @@ export default function AdminDashboard() {
           </section>
         </div>
       )}
-
-      <section className="workspace-card dark admin-shortcuts">
-        <div className="workspace-card__head">
-          <div><h2>관리 메뉴</h2><p>자주 사용하는 관리자 기능으로 바로 이동합니다.</p></div>
-        </div>
-        <div className="workspace-actions">
-          <Link className="secondary-button" to="/admin/notices">공지 관리</Link>
-          <Link className="secondary-button" to="/admin/reports">신고 관리</Link>
-          <Link className="secondary-button" to="/admin/assets">기자재 관리</Link>
-          <Link className="secondary-button" to="/admin/rooms">공간 관리</Link>
-        </div>
-      </section>
     </div>
   );
 }

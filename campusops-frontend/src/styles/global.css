@@ -4992,6 +4992,40 @@ select:focus-visible {
   color: #8fd0ff;
 }
 
+.admin-command-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.admin-command-strip a {
+  display: grid;
+  gap: 0.28rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #cdddeb;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+  box-shadow: 0 10px 24px rgba(15, 47, 87, 0.06);
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.admin-command-strip a:hover {
+  border-color: #8fb7d9;
+  background: #f2f8ff;
+  transform: translateY(-1px);
+}
+
+.admin-command-strip strong {
+  color: #08233f;
+  font-size: 0.96rem;
+}
+
+.admin-command-strip span {
+  color: #6b7a90;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 .admin-stats .workspace-stat {
   border-top: 3px solid #123b63;
 }
@@ -5508,6 +5542,10 @@ select:focus-visible {
 }
 
 @media (max-width: 900px) {
+  .admin-command-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .qna-hero,
   .qna-layout {
     grid-template-columns: 1fr;
@@ -5524,6 +5562,10 @@ select:focus-visible {
 }
 
 @media (max-width: 640px) {
+  .admin-command-strip {
+    grid-template-columns: 1fr;
+  }
+
   .qna-hero {
     min-height: 220px;
     padding: 1.4rem;
