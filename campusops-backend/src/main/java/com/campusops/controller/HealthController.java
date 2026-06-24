@@ -18,6 +18,13 @@ public class HealthController {
     private final DataSource dataSource;
     private final RedisConnectionFactory redisConnectionFactory;
 
+    @GetMapping("/api/ping")
+    public ApiResponse<Map<String, Object>> ping() {
+        Map<String, Object> status = new HashMap<>();
+        status.put("app", "UP");
+        return ApiResponse.success("서버 응답 성공", status);
+    }
+
     @GetMapping("/api/health")
     public ApiResponse<Map<String, Object>> health() {
         Map<String, Object> status = new HashMap<>();
