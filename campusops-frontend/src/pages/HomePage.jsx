@@ -216,6 +216,23 @@ export default function HomePage() {
 
   const activeWork = derived.workTabs.find((tab) => tab.id === activeTab) || derived.workTabs[0];
   const dashboardPath = currentUser?.role === 'ADMIN' ? '/admin' : '/dashboard';
+  const normalizeWorkItem = (item) => {
+    const next = { ...item };
+    const numberMatch = String(next.title || '').match(/#(\d+)/);
+    const dateMatch = String(next.meta || '').match(/\d{4}-\d{2}-\d{2}/);
+
+    if (activeWork.id === 'rentals') {
+      if (numberMatch) next.title = `등록 기자재 ${numberMatch[1]}`;
+      if (dateMatch && !String(next.meta).startsWith('반납 예정')) next.meta = `반납 예정 · ${dateMatch[0]}`;
+    }
+
+    if (activeWork.id === 'rooms') {
+      if (numberMatch) next.title = String(next.title).replace(/.*#(\d+)/, '등록 공간 $1');
+      next.title = String(next.title).replace(' 쨌 ', ' · ');
+    }
+
+    return next;
+  };
 
   return (
     <div className="reference-home">
@@ -348,13 +365,15 @@ export default function HomePage() {
             </div>
           </header>
           <div className="reference-work__list">
-            {activeWork.items.length > 0 ? activeWork.items.map((item) => (
-              <div className="reference-work__row" key={`${item.title}-${item.meta}`}>
-                <span><LineIcon name={item.icon} /></span>
-                <div><strong>{item.title}</strong><small>{item.meta}</small></div>
-                <b className={`ops-status ops-status--${item.tone}`}>{item.status}</b>
+            {activeWork.items.length > 0 ? activeWork.items.map((item) => {
+              const displayItem = normalizeWorkItem(item);
+              return (
+              <div className="reference-work__row" key={`${displayItem.title}-${displayItem.meta}`}>
+                <span><LineIcon name={displayItem.icon} /></span>
+                <div><strong>{displayItem.title}</strong><small>{displayItem.meta}</small></div>
+                <b className={`ops-status ops-status--${displayItem.tone}`}>{displayItem.status}</b>
               </div>
-            )) : <div className="reference-empty">로그인하면 개인 업무 현황을 확인할 수 있습니다.</div>}
+            ); }) : <div className="reference-empty">로그인하면 개인 업무 현황을 확인할 수 있습니다.</div>}
           </div>
         </article>
 

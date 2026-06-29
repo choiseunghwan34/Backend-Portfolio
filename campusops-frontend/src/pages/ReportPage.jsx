@@ -5,6 +5,7 @@ import EmptyState from '../components/EmptyState';
 import { SkeletonList } from '../components/Skeleton';
 import StatusTimeline from '../components/StatusTimeline';
 import { notify } from '../utils/dialog.jsx';
+import { labelOf, reportStatusLabels } from '../utils/labels';
 
 function statusClass(value = '') {
   return String(value).toLowerCase();
@@ -94,7 +95,7 @@ export default function ReportPage() {
                     <span>{report.place} · {report.category || '기타'}{report.adminReply ? ` · 답변: ${report.adminReply}` : ''}</span>
                     <StatusTimeline steps={['RECEIVED', 'CHECKING', 'COMPLETED']} current={report.status} />
                   </div>
-                  <span className={`status-pill ${statusClass(report.status)}`}>{statusText[report.status] || report.status}</span>
+                  <span className={`status-pill ${statusClass(report.status)}`}>{labelOf(reportStatusLabels, report.status)}</span>
                 </Link>
               ))}
               {!myReports.length ? <EmptyState eyebrow="REPORT" title="아직 등록한 신고가 없습니다." description="시설 고장이나 불편 사항이 있으면 왼쪽 양식으로 신고해 주세요." /> : null}

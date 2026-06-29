@@ -5,6 +5,7 @@ import EmptyState from '../components/EmptyState';
 import { SkeletonList } from '../components/Skeleton';
 import StatusTimeline from '../components/StatusTimeline';
 import { confirmDialog, notify } from '../utils/dialog.jsx';
+import { labelOf, reservationStatusLabels, roomStatusLabels } from '../utils/labels';
 
 function statusClass(value = '') {
   return String(value).toLowerCase();
@@ -97,7 +98,7 @@ export default function RoomPage() {
                   <span>{room.location || '위치 미정'} · {room.capacity || 0}명 수용</span>
                 </div>
                 <div className="service-row__actions">
-                  <span className={`status-pill ${statusClass(room.status)}`}>{roomStatusText[room.status] || room.status}</span>
+                  <span className={`status-pill ${statusClass(room.status)}`}>{labelOf(roomStatusLabels, room.status)}</span>
                   <span className="secondary-button">좌석 선택</span>
                 </div>
               </Link>
@@ -124,7 +125,7 @@ export default function RoomPage() {
                   <StatusTimeline steps={['RESERVED', 'COMPLETED']} current={reservation.status} />
                 </div>
                 <div className="service-row__actions">
-                  <span className={`status-pill ${statusClass(reservation.status)}`}>{reservationStatusText[reservation.status] || reservation.status}</span>
+                  <span className={`status-pill ${statusClass(reservation.status)}`}>{labelOf(reservationStatusLabels, reservation.status)}</span>
                   {reservation.status === 'RESERVED'
                     ? <button className="secondary-button danger-button" type="button" onClick={() => cancelReservation(reservation.reservationNo)}>예약 취소</button>
                     : null}
