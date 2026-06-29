@@ -4,6 +4,14 @@ import { authApi } from '../api/authApi';
 import { homeApi } from '../api/homeApi';
 import { clearSession, getCurrentUser } from '../utils/auth';
 import { toast } from '../utils/dialog.jsx';
+import {
+  assetTitle,
+  labelOf,
+  rentalStatusLabels,
+  reportStatusLabels,
+  reservationStatusLabels,
+  roomTitle
+} from '../utils/labels';
 
 const quickServices = [
   { no: '01', title: '강의실 예약', description: '오늘 가능한 강의실 확인', to: '/rooms' },
@@ -176,7 +184,7 @@ export default function HomePage() {
             icon: 'report',
             title: item.title,
             meta: `${item.place || '시설'} · ${formatDate(item.createdAt)}`,
-            status: reportStatusText[item.status] || item.status,
+            status: labelOf(reportStatusLabels, item.status),
             tone: toneByStatus[item.status] || 'waiting'
           }))
         },
@@ -187,7 +195,7 @@ export default function HomePage() {
             icon: 'box',
             title: item.assetName || `기자재 #${item.assetNo}`,
             meta: `반납 예정 · ${formatDate(item.returnDueDate || item.createdAt)}`,
-            status: rentalStatusText[item.rentalStatus] || item.rentalStatus,
+            status: labelOf(rentalStatusLabels, item.rentalStatus),
             tone: toneByStatus[item.rentalStatus] || 'waiting'
           }))
         },
@@ -198,7 +206,7 @@ export default function HomePage() {
             icon: 'calendar',
             title: `${item.roomName || `공간 #${item.roomNo}`} · ${formatTime(item.startTime)} - ${formatTime(item.endTime)}`,
             meta: formatDate(item.reservationDate),
-            status: reservationStatusText[item.status] || item.status,
+            status: labelOf(reservationStatusLabels, item.status),
             tone: toneByStatus[item.status] || 'checking'
           }))
         }

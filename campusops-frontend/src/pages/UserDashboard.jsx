@@ -1,9 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { homeApi } from '../api/homeApi';
+import {
+  assetTitle,
+  labelOf,
+  rentalStatusLabels,
+  reportStatusLabels,
+  reservationStatusLabels,
+  roomTitle
+} from '../utils/labels';
 
 function statusClass(value = '') {
   return String(value).toLowerCase();
+}
+
+function dateOnly(value) {
+  return String(value || '').slice(0, 10) || '-';
+}
+
+function timeOnly(value) {
+  return String(value || '').slice(0, 5) || '-';
 }
 
 export default function UserDashboard() {
@@ -42,7 +58,7 @@ export default function UserDashboard() {
       <section className="workspace-stats">
         <div className="workspace-stat"><span>내 신고</span><strong>{myReports.length}</strong><small>처리 상태 확인</small></div>
         <div className="workspace-stat"><span>내 대여</span><strong>{myRentals.length}</strong><small>승인 및 반납 일정</small></div>
-        <div className="workspace-stat"><span>내 예약</span><strong>{myReservations.length}</strong><small>오늘 공간 이용 일정</small></div>
+        <div className="workspace-stat"><span>내 예약</span><strong>{myReservations.length}</strong><small>공간 이용 일정</small></div>
         <div className="workspace-stat"><span>최근 공지</span><strong>{notices.length}</strong><small>중요 운영 안내</small></div>
       </section>
 
@@ -51,7 +67,7 @@ export default function UserDashboard() {
           <div className="workspace-card__head">
             <div>
               <h2>최근 공지사항</h2>
-              <p>학교 운영팀에서 등록한 최신 공지입니다.</p>
+              <p>운영팀에서 등록한 최신 공지입니다.</p>
             </div>
             <Link className="secondary-button" to="/notices">전체보기</Link>
           </div>
@@ -60,9 +76,9 @@ export default function UserDashboard() {
               <Link className="workspace-row" key={item.noticeNo} to={`/notices/${item.noticeNo}`}>
                 <div className="workspace-row__main">
                   <strong className="notice-title">{item.importantYn ? <i className="important-dot" /> : null}{item.title}</strong>
-                  <span>{item.category || '일반'} · 조회수 {item.viewCount}</span>
+                  <span>{item.category || '일반'} · 조회 {item.viewCount}</span>
                 </div>
-                <span className="workspace-row__meta">{String(item.createdAt || '').slice(0, 10)}</span>
+                <span className="workspace-row__meta">{dateOnly(item.createdAt)}</span>
               </Link>
             )) : <div className="workspace-empty">최근 공지가 없습니다.</div>}
           </div>
@@ -72,23 +88,46 @@ export default function UserDashboard() {
           <div className="workspace-card__head">
             <div>
               <h2>진행 중인 요청</h2>
-              <p>신고와 대여, 예약 내역을 빠르게 확인합니다.</p>
+              <p>신고, 대여, 예약 내역을 빠르게 확인합니다.</p>
             </div>
           </div>
           <div className="workspace-list">
             {myReports.slice(0, 2).map((report) => (
               <div className="workspace-row" key={`report-${report.reportNo}`}>
-                <div className="workspace-row__main"><strong>{report.title}</strong><span>{report.place} · 시설 신고</span></div>
-                <span className={`status-pill ${statusClass(report.status)}`}>{report.status}</span>
+                <div className="workspace-row__main">
+                  <strong>{report.title}</strong>
+                  <span>{report.place || '장소 미지정'} · 시설 신고</span>
+                </div>
+                <span className={`status-pill ${statusClass(report.status)}`}>
+                  {labelOf(reportStatusLabels, report.status)}
+                </span>
               </div>
             ))}
             {myRentals.slice(0, 2).map((rental) => (
               <div className="workspace-row" key={`rental-${rental.rentalNo}`}>
-                <div className="workspace-row__main"><strong>기자재 #{rental.assetNo}</strong><span>반납 예정 {String(rental.returnDueDate || '').slice(0, 10)}</span></div>
-                <span className={`status-pill ${statusClass(rental.rentalStatus)}`}>{rental.rentalStatus}</span>
+                <div className="workspace-row__main">
+                  <strong>{assetTitle(rental)}</strong>
+                  <span>반납 예정 {dateOnly(rental.returnDueDate)}</span>
+                </div>
+                <span className={`status-pill ${statusClass(rental.rentalStatus)}`}>
+                  {labelOf(rentalStatusLabels, rental.rentalStatus)}
+                </span>
               </div>
             ))}
-            {!myReports.length && !myRentals.length ? <div className="workspace-empty">진행 중인 요청이 없습니다.</div> : null}
+            {myReservations.slice(0, 2).map((reservation) => (
+              <div className="workspace-row" key={`reservation-${reservation.reservationNo}`}>
+                <div className="workspace-row__main">
+                  <strong>{roomTitle(reservation)}{reservation.seatCode ? ` · ${reservation.seatCode} 좌석` : ''}</strong>
+                  <span>{dateOnly(reservation.reservationDate)} · {timeOnly(reservation.startTime)} - {timeOnly(reservation.endTime)}</span>
+                </div>
+                <span className={`status-pill ${statusClass(reservation.status)}`}>
+                  {labelOf(reservationStatusLabels, reservation.status)}
+                </span>
+              </div>
+            ))}
+            {!myReports.length && !myRentals.length && !myReservations.length ? (
+              <div className="workspace-empty">진행 중인 요청이 없습니다.</div>
+            ) : null}
           </div>
         </article>
       </section>
