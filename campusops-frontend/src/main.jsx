@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Analytics } from '@vercel/analytics/react';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { DialogProvider } from './utils/dialog.jsx';
@@ -10,6 +11,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <DialogProvider>
         <App />
+        <Analytics />
       </DialogProvider>
     </BrowserRouter>
   </React.StrictMode>
